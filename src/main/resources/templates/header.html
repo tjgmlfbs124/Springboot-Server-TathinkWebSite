@@ -13,8 +13,8 @@
 <script type="text/javascript" th:src="@{/js/ui.js}"></script>
 </head>
 
-<body>   
-	<div id="header" th:fragment="contents">                                               
+<body>
+	<div id="header" th:fragment="contents">
 	    <div id="util"> <span class="slogan"><img th:src="@{/images/ui/common/slogan.png}" width="240" height="31" alt="논리수학적으로 깊이 생각하는 힘!"/></span>
 	      <ul>
 	        <li th:if="${member != null}" class="joinps"><th:block th:text="${member.realname}+'님 어서오세요'"></li>
@@ -56,7 +56,7 @@
 	              	<li><a th:href="@{/myroom/myclass}">수강현황</a></li>
 	                <li><a th:href="@{/myroom/memberModify}">회원정보 수정</a></li>
 	              </ul>
-	            </li>	            
+	            </li>
 	            <li ><span><a th:href="@{/tathinkInfo/descript}">T. A. Think?</a></span>
 	              <ul style="display:none;">
 	                <li><a th:href="@{/tathinkInfo/descript}">T. A. Think 소개</a></li>
