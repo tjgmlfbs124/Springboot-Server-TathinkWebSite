@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.bannerSlider-1.0__.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(function () {
+	  $('#tc_slice').scrollbox({
+	    direction: 'h',
+	    distance: 250
+	  });
+	  $('#tc_slice-backward').click(function () {
+	    $('#tc_slice').trigger('backward');
+	  });
+	  $('#tc_slice-forward').click(function () {
+	    $('#tc_slice').trigger('forward');
+	  });
+});
+</script>
+
+</head>
+
+<body>
+<div id="wrap">
+	<div th:replace="header :: contents"></div>
+
+</div>
+</body>
+</html>
