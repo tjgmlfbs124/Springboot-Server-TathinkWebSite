@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="classroomTab05" class="tabCont" id="service5" style="display:none;">
+<script th:inline="javascript">
+	var homeworkListBox = null;
+	var complete = false;
+	$(document).ready(function(){ 
+		$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+			
+		homeworkListBox = document.getElementById("homeworkListBox");
+
+		searchHomework("TITLE","", 0);
+	});
+	
+	var gSearchHomeworkWord = "";
+	var gSearchHomeworkOption = "ALL";
+	var gSearchHomeworkPageIdx= 0;
+	
+	function showHomeworkListBox()
+	{
+		homeworkListBox.style.display="block";
+	}
+	
+	function hideHomeworkListBox()
+	{
+		homeworkListBox.style.display="none";
+	}
+	
+	function isHideHomeworkListBox()
+	{
+		if(homeworkListBox.style.display == "none")
+			return true;
+		
+		return false;
+	}
+	
+	function searchHomeworkPage(page)
+	{
+		searchHomework(gSearchHomeworkOption, gSearchHomeworkWord, page);
+	}
+	
+	function searchHomework(option, word, page)
+	{	
+		var reqObj = new Object();
+		
+		gSearchHomeworkWord = word;
+		gSearchHomeworkOption = option;
+		gSearchHomeworkPageIdx = page;
+		
+		reqObj.classSeq = /*[[${class.seq}]]*/;
+	    reqObj.word = word;
+	    reqObj.option = option;
+	    reqObj.pageIdx = page;
+	        
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/classHomework}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.done(makeHomeworkList);
+	    
+	    request.fail(function(jqXHR, textStatus){ 
+	        alert(textStatus);
+	    });
+	}
+	
+	function makeHomeworkList(data)
+	{
+		var responseData = JSON.parse(data);
+	    
+	  	if(!responseData)
+	  	{
+	     	alert("세션이 만료되어 재접속이 필요합니다.");
+	     	return false;
+	  	}      
+	  	
+	  	if(responseData.error != null)
+	  	{
+	     	alert(responseData.error);
+	     	return false;
+	  	}
+	  	
+	  	clearHomework();
+	  	
+	  	if(isHideHomeworkListBox())
+		{
+	  		showHomeworkListBox();
+		}
+	  	
+	  	hideHomeworkView();
+		hideHomeworkWrite();
+		
+	  	var homeworkTotalCnt = document.getElementById("homeworkTotalCnt");
+	  	homeworkTotalCnt.innerHTML = "Total : <span class='red'></span>"+responseData.homeworkList.length+"건";
+	  	
+	  	if(responseData.homeworkList.length>0)
+	  		document.getElementById("homeworkEmpty").style.display="none";
+	  	
+	  	for(i = 0; i < responseData.homeworkList.length; i ++)
+		{
+	  		addHomework(responseData.homeworkList[i]);
+		}
+	  	
+	    if(responseData.pageCnt != 0)
+	    {
+	      addHomeworkPaginate(responseData);
+	    }
+	}
+	
+	function clearHomework()
+	{
+	    var homeworkListContainer = document.getElementById("homeworkListContainer");
+	    var homeworkPaginate = document.getElementById("homeworkPaginate");	
+	    document.getElementById("homeworkEmpty").style.display="";
+	    
+	    homeworkListContainer.innerHTML = "";
+	    homeworkPaginate.innerHTML = "";
+	}
+	
+	function addHomework(homeworkData)
+	{	
+		var homeworkListContainer;
+		var row;
+		var checkCell;
+		var seqCell;
+		var titleCell;
+		var applyDateCell;
+		var regDateCell;
+		var reportPointCell;
+		var reportDateCell;
+		var stateCell;
+	
+		var ahref = document.createElement("a");
+		
+		homeworkListContainer = document.getElementById("homeworkListContainer");
+	  	row = homeworkListContainer.insertRow();
+	  	
+	  	if(bManager == true)
+	  	{
+			checkCell = row.insertCell(0);
+			seqCell   = row.insertCell(1);
+			titleCell   = row.insertCell(2);
+			applyDateCell   = row.insertCell(3);
+			regDateCell   = row.insertCell(4);
+			
+			var checkbox = document.createElement("input");
+			checkbox.setAttribute("type", "checkbox");
+			checkbox.setAttribute("id", "homeworkCheck");
+			checkbox.setAttribute("name", "homeworkCheck");
+			checkbox.value = homeworkData.seq;
+			
+			checkCell.appendChild(checkbox);
+			
+		  	regDateCell.setAttribute("class", "alcenter");
+		  	var date = new Date(homeworkData.regDate);
+		  	regDateCell.innerHTML = date.toISOString().slice(0,10);
+	  	}
+	  	else
+		{
+			seqCell   = row.insertCell(0);
+			titleCell   = row.insertCell(1);
+			applyDateCell   = row.insertCell(2);
+			reportDateCell   = row.insertCell(3);
+			reportPointCell   = row.insertCell(4);
+			stateCell = row.insertCell(5);
+			
+		  	reportDateCell.setAttribute("class", "alcenter");
+		  	var date = new Date(homeworkData.regDate);
+		  	reportDateCell.innerHTML = date.toISOString().slice(0,10);
+		  	
+		  	reportPointCell.setAttribute("class", "alcenter");
+
+		  	if(homeworkData.point!=null && homeworkData.point!=""){	
+		  		reportPointCell.innerHTML = homeworkData.point;
+		  	}
+		  	else{
+		  		reportPointCell.innerHTML ="-";		  		
+		  	}
+		  	
+		  	stateCell.setAttribute("class", "alcenter");
+		  	if(homeworkData.submit){
+		  		stateCell.innerHTML ="제출";	
+		  	}else{
+		  		stateCell.innerHTML ="미제출";	
+		  	}
+		  	if(homeworkData.submit==true && homeworkData.point!=null && homeworkData.point!=""){
+		  		stateCell.innerHTML = "평가완료";
+		  		complete = true;
+		  	}
+		}
+	
+	  	seqCell.innerHTML = homeworkData.seq;
+	  	
+	  	ahref.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 300px;white-space: nowrap; font-weight:bold;cursor:pointer");
+	  	ahref.innerHTML = homeworkData.title;
+	  	titleCell.setAttribute("class", "listTitle");
+	  	titleCell.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 500px;white-space: nowrap;");
+	  	titleCell.appendChild(ahref);
+	  	titleCell.innerHTML = titleCell.innerHTML.replace(/\n\r?/g, '<br />');
+	  	  	
+	  	applyDateCell.setAttribute("class", "alcenter");
+	  	applyDateCell.innerHTML = homeworkData.applyDate;
+	  	
+	  	titleCell.onclick=function()
+		{
+	  		hideHomeworkWrite();
+	  		hideHomeworkListBox();
+			showHomeworkView(homeworkData.seq);
+		};
+	}
+	
+	function addHomeworkPaginate(pageData)
+	{	
+		var homeworkPaginate = document.getElementById("homeworkPaginate");
+		var first  = document.createElement("a");
+		
+		first.setAttribute("class", "first");
+	  	first.setAttribute("href", "javascript:{}");
+	  	first.setAttribute("onclick", "searchHomeworkPage('0');");
+	  	first.innerHTML="맨처음으로";
+	  	homeworkPaginate.appendChild(first);
+	  	    
+	  	if(!(pageData.currPageIdx < 6))
+	  	{
+	    	var pre = document.createElement("a");
+	    	pre.setAttribute("class", "pre");
+	    	pre.setAttribute("href", "javascript:{}");
+	    	pre.setAttribute("onclick", "searchHomeworkPage('"+(pageData.startPageIdx-2)+"');");
+	    	pre.innerHTML="이전페이지";
+	    	homeworkPaginate.appendChild(pre);
+	  	}   
+	  
+	  	var pageBox  = document.createElement("div");
+	  	homeworkPaginate.appendChild(pageBox);
+	  
+	  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+	  	{
+	    	if(i!=pageData.currPageIdx)
+	    	{
+	      		var p  = document.createElement("a");
+	      		p.setAttribute("href", "javascript:{}");
+	      		p.setAttribute("onclick", "searchHomeworkPage('"+(i-1)+"');");
+	      		p.innerHTML=""+i;
+	      
+	      		pageBox.appendChild(p);
+	    	}
+	    	else
+	    	{
+	      		var s  = document.createElement("strong");
+	      		s.setAttribute("href", "javascript:{}");
+	      		s.setAttribute("onclick", "searchHomeworkPage('"+(i-1)+"');");
+	      		s.innerHTML=""+i;
+	      		pageBox.appendChild(s);
+	    	}
+	  	}    
+	   	
+	  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+	  	{
+	    	var next = document.createElement("a");
+	    	next.setAttribute("class", "next");
+	    	next.setAttribute("href", "javascript:{}");
+	    	next.setAttribute("onclick", "searchHomeworkPage('"+pageData.endPageIdx+"');");
+	    	next.innerHTML="다음페이지";
+	    	homeworkPaginate.appendChild(next);
+	  	}  
+	  
+	  	var last   = document.createElement("a");
+	  	last.setAttribute("class", "last");
+	  	last.setAttribute("href", "javascript:{}");
+	  	last.setAttribute("onclick", "searchHomeworkPage('"+(pageData.pageCnt-1)+"');");
+	  	last.innerHTML="맨마지막";
+	  	homeworkPaginate.appendChild(last);
+	}
+	
+	function onClicksearchHomework()
+	{
+		var searchHomeworkValue = document.getElementById("searchHomeworkValue");
+		var searchHomeworkType = document.getElementById("searchHomeworkType");
+		
+		searchHomework(searchHomeworkType.value, searchHomeworkValue.value,0);
+	}
+	
+	
+	function onClickHomeworkAllCheck()
+	{
+	    if( $("#homeworkAllCheck").is(':checked') )
+	    {
+	        $("input[name=homeworkCheck]").prop("checked", true);
+	    }
+	    else
+	    {
+	       $("input[name=homeworkCheck]").prop("checked", false);
+	    }
+	}
+	
+	function onClickHomeworkListDelete()
+	{	
+		var checkRow = "";
+		
+		$( "input[name='homeworkCheck']:checked" ).each (
+			function ()
+			{
+				checkRow = checkRow + $(this).val()+":" ;
+			}
+		);
+		
+		checkRow = checkRow.substring(0,checkRow.lastIndexOf( ":"));
+		
+		if(checkRow == '')
+		{
+		  alert("삭제할 과제를 선택하세요.");
+		  return false;
+		}
+		
+		if(confirm("선택한 과제를 삭제 하시겠습니까?"))
+		{
+			deleteListHomework(checkRow);
+		}	
+	}
+	
+	function deleteListHomework(checkRow)
+	{
+		var reqObj = new Object();
+		
+	    reqObj.listSeq = checkRow;
+	    reqObj.word = gSearchHomeworkWord;
+	    reqObj.option = gSearchHomeworkOption;
+	    reqObj.classSeq = /*[[${class.seq}]]*/;
+	    reqObj.pageIdx = gSearchHomeworkPageIdx;
+	    
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/deleteClassHomeworkList}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.done(makeHomeworkList);
+	    
+	    request.fail(function(jqXHR, textStatus){alert(textStatus);});
+	}
+	
+	function onClickHomeworkWrite(checkRow)
+	{
+		if(writeHomeworkBox.style.display=="block")
+			return;
+		
+		showHomeworkWrite(-1, "", null,"","","");
+		hideHomeworkView();
+		hideHomeworkListBox();
+	}
+</script>	
+	<div id="homeworkListBox">
+		<div class="tableTop">
+			<p id="homeworkTotalCnt" class="count"></p>
+			<div class="searchTable"> 
+				<span class="formElement">
+					<select id="searchHomeworkType" style="width:105px;">
+						<option value="ALL">전체</option>
+						<option value="TITLE">제목</option>
+						<option value="CONTENT">내용</option>
+					</select>
+				</span>
+				<div class="search">
+					<input type="text" id="searchHomeworkValue">
+					<button type="submit" id="searchHomeworkAction" name="searchHomeworkAction" onclick="onClicksearchHomework();">검색하기</button>
+				</div>
+			</div>
+		</div> 
+		<div class="tbList">
+			<table border="1" cellspacing="0" summary="과제 리스트">
+				<caption>과제 리스트</caption>
+				<colgroup>
+					<col th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}" width="40">
+					<col width="40">
+					<col width="">
+					<col width="140">
+					<col width="100">
+					<col th:if="${member != null && (member.level == 'LEVEL_MEMBER')}" width="60">
+					<col th:if="${member != null && (member.level == 'LEVEL_MEMBER')}" width="80">
+				</colgroup>
+				<thead>
+					<tr>
+						<th th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}" scope="colgroup"><input type="checkbox" id="homeworkAllCheck" name="homeworkAllCheck" onclick="onClickHomeworkAllCheck()"></th>
+						<th scope="col">No.</th>
+						<th scope="col">과제명</th>
+						<th scope="col">제출기간</th>
+						<th th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}" scope="col">등록일</th>
+						<th th:unless="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}" scope="col">제출일</th>					
+						<th th:if="${member != null && (member.level == 'LEVEL_MEMBER')}" scope="col">점수</th>
+						<th th:if="${member != null && (member.level == 'LEVEL_MEMBER')}" scope="col">상태</th>
+					</tr>
+				</thead>
+				<tbody id="homeworkListContainer"></tbody>
+			</table>
+		</div>
+		<div id = "homeworkEmpty" style="text-align:center;">정보가 없습니다.</div> 	
+		<div class="btnWrap" th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}"> 
+			<span class="btnBasic light"><button type="button" onclick="onClickHomeworkListDelete();">삭제</button></span>
+			<span class="btnBasic blue" id="btnHomeworkWrite"> <button type="button"  onclick="onClickHomeworkWrite();">글쓰기</button></span>
+		</div>
+		<div id="homeworkPaginate" class="paginate"></div>		
+	</div>
+ 	<div th:replace="myroom/classHomeworkView :: contents"></div>
+	<div th:replace="myroom/classHomeworkWrite :: contents"></div>
+	<div th:replace="myroom/classHomeworkManage :: contents"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="answerBox" style="display:none;">
+<script th:inline="javascript">
+	var answerBox = document.getElementById("answerBox");
+	
+	function hideQnaAWrite()
+	{
+		answerBox.style.display="none";
+		removeMyEditer();
+		location.href = "#contents_container";
+	}
+	
+	function showQnaAWrite(seq, title, qWriter, qRegDate, question, answer, bSec)
+	{
+		var answerBoxSeq = document.getElementById("answerBoxSeq");
+		var answerBoxTitle = document.getElementById("answerBoxTitle");
+		var answerBoxQWriter = document.getElementById("answerBoxQWriter");
+		var answerBoxQRegDate = document.getElementById("answerBoxQRegDate");
+		var answerBoxPublic = document.getElementById("answerBoxPublic");
+		var answerBoxPrivate = document.getElementById("answerBoxPrivate");
+		var answerBoxQuestion = document.getElementById("answerBoxQuestion");
+		
+		var classSeq = document.getElementById("classQnaASeq");	
+		
+		classSeq.value = /*[[${class.seq}]]*/;
+		                                   
+		createMyEditer("answerBoxAnswer", "answerBoxConfirm", "answerBoxForm", answer, /*[[@{/smartEditor/SmartEditor2Skin}]]*/);
+
+		answerBoxSeq.value = seq;
+		answerBoxTitle.textContent = title;
+		answerBoxTitle.innerHTML = answerBoxTitle.innerHTML.replace(/\n\r?/g, '<br />');
+		answerBoxQRegDate.textContent = qRegDate;
+		answerBoxQWriter.textContent = qWriter;
+		answerBoxQWriter.innerHTML = answerBoxQWriter.innerHTML.replace(/\n\r?/g, '<br />');
+		answerBoxQuestion.innerHTML = question;
+		
+		if(bSec == true)
+		{
+			answerBoxPublic.style.display = "none";
+			answerBoxPrivate.style.display = "inline";
+		}
+		else
+		{
+			answerBoxPublic.style.display = "inline";
+			answerBoxPrivate.style.display = "none";
+		}
+		
+		answerBox.style.display="block";
+		location.href = "#answerBox";
+	}
+	
+	function onClickAWriteCancle()
+	{
+		hideQnaAWrite();
+		
+		if(isHideQnaListBox())
+			searchQnA(gSearchQnAOption, gSearchQnAWord, gSearchQnAPageIdx);
+	}
+</script>
+	<h4>Q&amp;A 답변 쓰기</h4>
+	<form name="answerBoxForm" id="answerBoxForm" th:action="@{/myroom/classQnaAnswer}" onsubmit="return true;" method="post" enctype="multipart/form-data">   
+		<input type="hidden" id="answerBoxSeq" name="seq" value="" >
+		<input type="hidden" id="classQnaASeq" name="classSeq" >
+		<div class="tbList">
+			<table border="1" cellspacing="0" summary="답변 쓰기">
+				<caption>답변 쓰기 </caption>
+				<colgroup>
+					<col width="100">
+					<col width="">
+				</colgroup>
+				<thead>
+				<thead>
+					<tr>
+						<th colspan="1">제목</th>
+						<th colspan="1" class="read" scope="colgroup" id="answerBoxTitle"></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td colspan="2" class="listinfo">
+							<span class="title">작성자</span>
+							<span id="answerBoxQWriter"></span>
+							<span class="title">작성일시</span>
+							<span id="answerBoxQRegDate"></span>
+							<span class="title">공개설정</span>
+							<span id="answerBoxPublic">공개</label>
+							<span id="answerBoxPrivate">비공개</label>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2" class="content" id="answerBoxQuestion" style="line-height:1.5;"></td>
+					</tr>
+				</tbody>
+			</table>
+			<table name="answerRead" border="1" cellspacing="0" summary="답변 글읽기">
+				<caption>답변 글읽기</caption>
+				<thead>
+					<tr>
+						<th colspan="1" class="read" scope="colgroup">답변</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td colspan="1" class="content" style="width: 750px;">
+								<textarea name="aContent" id="answerBoxAnswer" title="글쓰기" style="width: 750px; height:400px;"></textarea>
+						</td>
+					</tr>	            
+				</tbody>
+			</table>           
+			<div class="btnWrap">
+				<span class="btnLarge light"><a href="javascript:{}" onclick="onClickAWriteCancle();">취소</a></span>
+			    <span class="btnLarge"><button id="answerBoxConfirm" type="button">확인</button></span> 
+			</div>
+		</div>
+	</form>
+</div>
+</body>
+</html>

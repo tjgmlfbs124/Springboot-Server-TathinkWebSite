@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<!--[if lt IE 9]>
+	<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+<![endif]-->
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready( function() {	
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	$('.present').click();
+	
+	var list = /*[[${offlineStudyInfoData.listStudyInfo}]]*/;
+	if(list.length<=0){
+		document.getElementById("empty").style.display="";
+	}else{
+		document.getElementById("empty").style.display="none";
+	}
+	var listKit = /*[[${listKit}]]*/;
+	if(listKit.length<=0){
+		document.getElementById("kitempty").style.display="";
+	}else{
+		document.getElementById("kitempty").style.display="none";
+	}
+});
+</script>
+</head>
+
+<body>
+<div id="wrap">
+	<div th:replace="header :: contents"></div>
+	<div id="container"> 
+		<div class="subhead">
+   			<div class="subtitle">
+     			<h2>강의소개</h2>
+     			<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think!</span>
+     			<div class="place">
+     				<span><a th:href="@{/}">Home</a></span>> 강의소개 > <th:block th:text="${levelName}" /> > <th:block th:text="${course.courseName}" />
+      			</div>
+   			</div>
+ 		</div>
+ 		<div id="contents_container">
+   			<div id="contents_container2">
+     			<div class="lnb">
+     				<div th:replace="course/courseLnb :: contents"></div>
+     			</div>
+     			<div class="subcontents">
+			        <div class="courseintro"> 
+			        	<img th:src="@{${course.bigImgPath}}" width="825" height="240" alt="TAThink"/> 
+			        </div>
+       				<div class="tb02">
+         				<table width="100%" class="tb02" border="1" cellspacing="0" summary="과목정보">
+           					<caption>과목정보</caption>
+           					<colgroup>
+				    	        <col width="200"/>
+					            <col>
+           					</colgroup>
+           					<tbody>
+								<tr>
+							    	<th scope="row">과목 책임교수</th>
+							    	<td th:text="${teacher.realname}+' 선생님 외 전문 선생님'"></td>
+							  	</tr>
+							  	<tr>
+							    	<th scope="row">수강대상</th>
+							    	<td th:text="${course.target}"></td>
+							  	</tr>
+							  	<tr>
+							    	<th scope="row">전 과정 교육기간</th>
+							    	<td th:text="${course.term}"></td>
+							  	</tr>
+							</tbody>
+         				</table>
+       				</div>
+       				<h4 class="classinfo">과목소개</h4>
+      				<div class="paragraph " th:utext="${#strings.replace(#strings.escapeXml(course.info),'&#10;','&lt;br&gt;')}"></div>
+      				<h4 class="classinfo">미리 배워둬야하는 과목</h4>
+      				<div class="paragraph "><th:block th:utext="${#strings.replace(#strings.escapeXml(course.needsCourse),'&#10;','&lt;br&gt;')}" /></div>
+      				<div class="tab type5">
+						<ul>
+							<li class="present"><a href="#service2">오프라인강좌</a></li>
+							<li><a href="#service3">교수 소개</a></li>
+							<li><a href="#service4">교보재 소개</a></li>
+						</ul>
+					</div>
+       				<div class="tabContWrap"> 
+       					<!-- <div th:replace="course/courseTab01 :: courseTab01"></div>  -->
+       					<div th:replace="course/courseTab02 :: courseTab02"></div>
+       					<div th:replace="course/courseTab03 :: courseTab03"></div>
+       					<div th:replace="course/courseTab04 :: courseTab04"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

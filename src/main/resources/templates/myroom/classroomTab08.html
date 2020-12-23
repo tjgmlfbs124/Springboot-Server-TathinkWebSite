@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="classroomTab08" class="tabCont" id="service8" style="display:none;">
+<script th:inline="javascript">
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+
+	searchAttendanceInfo();
+});
+
+function searchAttendanceInfo()
+{	
+	var reqObj = new Object();
+	
+	reqObj.classSeq = /*[[${class.seq}]]*/;
+    
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/listClassAttendance}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(makeAttendanceInfo);
+    
+    request.fail(function(jqXHR, textStatus){ 
+        alert(textStatus);
+    });
+}
+
+function makeAttendanceInfo(data)
+{
+	var responseData = JSON.parse(data);
+    
+  	if(!responseData)
+  	{
+     	alert("세션이 만료되어 재접속이 필요합니다.");
+     	return false;
+  	}      
+  	
+  	if(responseData.error != null)
+  	{
+     	alert(responseData.error);
+     	return false;
+  	}
+  	
+  	clearAttendanceInfo();
+  	 		  	
+  	if(responseData.listOfflineClassMember.length>0)
+  		document.getElementById("attendanceEmpty").style.display="none";
+  	
+  	var listLesson = /*[[${listLesson}]]*/;
+  	var LessonLength = listLesson.length;
+  	
+  	addOfflineLessonInfo(LessonLength);
+  	
+	if(LessonLength<=0){
+		document.getElementById("attendanceEmpty").style.display="";
+		return;
+	}
+  	
+  	for(i = 0; i < responseData.listOfflineClassMember.length; i ++)
+	{
+  		addClassMemeberInfo(responseData.listOfflineClassMember[i],LessonLength);
+	}  	
+  	
+  	for(i = 0; i < responseData.listClassAttendance.length; i ++)
+	{
+  		addAttendanceInfo(responseData.listClassAttendance[i], LessonLength);
+	}  	
+  	
+}
+
+function clearAttendanceInfo()
+{
+    var attendanceInfoList = document.getElementById("attendanceInfoList");
+    document.getElementById("attendanceEmpty").style.display="";
+
+    attendanceInfoList.innerHTML = "";
+}
+
+function addOfflineLessonInfo(lessonlength)
+{		
+	var checkTable = document.getElementById("checkTable");
+	var colgroup;
+	var col;
+	var thead;
+	var tr;
+	var th;
+	var btn;
+	
+	colgroup = document.createElement("colgroup");
+	
+	col = document.createElement("col");
+	col.setAttribute("style","width:90px;");
+	colgroup.appendChild(col);
+	
+	thead = document.createElement("thead");
+	tr = document.createElement("tr");
+	th = document.createElement("th");
+	
+	th.innerHTML="이름";
+	tr.appendChild(th);
+	
+	for(var i =0; i<lessonlength; i++){
+		col = document.createElement("col");
+		col.setAttribute("style","width:*;");
+		colgroup.appendChild(col);
+			
+		th = document.createElement("th");
+		th.innerHTML = i+1 +"강";
+		
+		var checkAll = document.createElement("input");
+		checkAll.setAttribute("type", "checkbox");
+		checkAll.setAttribute("id","lessonCheckAll_"+(i+1));
+		checkAll.setAttribute("name","lessonCheckAll_"+(i+1));
+		checkAll.setAttribute("onClick","onClickLessonCheckAll("+(i+1)+")");
+		var div = document.createElement("div");
+		div.appendChild(checkAll);
+		th.appendChild(div);
+		tr.appendChild(th);		
+	}
+	col = document.createElement("col");
+	col.setAttribute("style","width:240px;");
+	colgroup.appendChild(col);
+	
+	th = document.createElement("th");
+	th.innerHTML = "학생관리내용";
+	tr.appendChild(th);
+	thead.appendChild(tr);
+	
+	checkTable.appendChild(colgroup);
+	checkTable.appendChild(thead);
+}
+
+function addClassMemeberInfo(memberInfoData,lessonlength)
+{	
+	var attendanceInfoList = document.getElementById("attendanceInfoList");
+	var tr;
+	var th;
+	var td;	
+		 	
+	tr = document.createElement("tr");
+	th = document.createElement("th");
+	
+	
+	var div = document.createElement("div");
+	div.innerHTML=memberInfoData.realname;
+	var span = document.createElement("input");
+	span.setAttribute("type", "hidden");
+	span.setAttribute("id", memberInfoData.username+"_id");
+	span.setAttribute("name", memberInfoData.username+"_id");
+	span.textContent = memberInfoData.username;
+	var seqbox = document.createElement("input");
+	seqbox.setAttribute("type", "hidden");
+	seqbox.setAttribute("id", memberInfoData.username+"_seq");
+	seqbox.setAttribute("name", memberInfoData.username+"_seq");
+	seqbox.value = -1;
+	div.appendChild(span);
+	div.appendChild(seqbox);
+		
+	th.appendChild(div);
+  	tr.appendChild(th);
+  	
+	for(var i =0; i<lessonlength; i++){
+		td = document.createElement("td");
+		
+		var checkbox = document.createElement("input");
+		checkbox.setAttribute("type", "checkbox");
+		checkbox.setAttribute("id", memberInfoData.username+"_check");
+		checkbox.setAttribute("name", "attendanceCheck_"+(i+1));
+		checkbox.value = i+1;
+		
+		td.appendChild(checkbox);		
+		tr.appendChild(td);
+	}
+	
+	td = document.createElement("td");
+	td. setAttribute
+	var input = document.createElement("input");
+	input.setAttribute("type", "text");
+	input.setAttribute("id", memberInfoData.username);
+	input.setAttribute("name", memberInfoData.username);	
+	input.setAttribute("style","overflow: hidden;text-overflow:ellipsis;max-width:140px;maxlength=200;white-space: nowrap;")
+	var btn = document.createElement("button");
+	btn.setAttribute("class","btnGry");
+	btn.setAttribute("onClick","onClickMemberReview('"+memberInfoData.username+"');");
+	btn.textContent = "적용";
+
+	td.appendChild(input);
+	td.appendChild(btn);
+	tr.appendChild(td);
+	
+	attendanceInfoList.appendChild(tr);
+}
+
+function addAttendanceInfo(memberInfoData,lessonlength)
+{	
+	var tbody = document.getElementById("attendanceInfoList");
+	var idx = attendanceInfoList.rows.length;
+	for(var i=0; i<idx; i++){
+		var username = tbody.rows[i].childNodes[0].childNodes[0].childNodes[1].textContent;
+		if(username == memberInfoData.username.username){
+			document.getElementById(username+"_seq").value = memberInfoData.seq;
+			if(memberInfoData.checkList !=null){
+				var checkArray = memberInfoData.checkList.split(":");
+				for(var j=0; j<checkArray.length;j++){
+					var check = checkArray[j];
+					if(check==""){ break; }
+					tbody.rows[i].childNodes[check].childNodes[0].checked = true;
+				}				
+			}
+			$("input[name="+username+"]").val(memberInfoData.content);
+			break;
+		}
+		
+	}
+}
+
+function onClickLessonCheckAll(id)
+{    
+    if( $("#lessonCheckAll_"+id).is(':checked') )
+    {
+    	$("input[name=attendanceCheck_"+id+"]").prop("checked", true);
+    }
+    else
+    {
+    	$("input[name=attendanceCheck_"+id+"]").prop("checked", false);
+    }    
+}
+
+function onClickAttendanceSubmit(){
+	
+	var listLesson = /*[[${listLesson}]]*/;
+	var lessonlength = listLesson.length;
+	if (lessonlength<=0){
+		return;
+	}	
+	var regForm = document.getElementById("regForm");
+	
+	var tbody = document.getElementById("attendanceInfoList");
+	var idx = tbody.rows.length;
+
+	if (idx<=0){
+		return;
+	}	
+
+	for(var i=0; i<idx; i++){
+		var username = tbody.rows[i].childNodes[0].childNodes[0].childNodes[1].textContent;
+		var seq = tbody.rows[i].childNodes[0].childNodes[0].childNodes[2].value;
+		var content = document.getElementById(username).value;
+		
+		var checkList = "";		
+		$( "input[id='"+username+"_check']:checked" ).each (
+			function ()
+			{
+				checkList = checkList + $(this).val()+":" ;
+			}
+		);		
+		checkList = checkList.substring(0,checkList.lastIndexOf( ":"));
+		
+		var seqElement = document.createElement("input");
+		seqElement.setAttribute("type", "hidden");
+		seqElement.setAttribute("name","checkList["+i+"].seq");
+		seqElement.value = seq;
+		
+		var classSeqElement = document.createElement("input");
+		classSeqElement.setAttribute("type", "hidden");
+		classSeqElement.setAttribute("name","checkList["+i+"].classSeq");
+		classSeqElement.value = /*[[${class.seq}]]*/;
+
+		var usernameElement = document.createElement("input");
+		usernameElement.setAttribute("type", "hidden");
+		usernameElement.setAttribute("name","checkList["+i+"].username");
+		usernameElement.value = username;
+
+		var checkListElement = document.createElement("input");
+		checkListElement.setAttribute("type", "hidden");
+		checkListElement.setAttribute("name","checkList["+i+"].checkList");
+		checkListElement.value = checkList;
+
+		var contentElement = document.createElement("input");
+		contentElement.setAttribute("type", "hidden");
+		contentElement.setAttribute("name","checkList["+i+"].content");
+		contentElement.value = content;
+		
+		regForm.appendChild(seqElement);
+		regForm.appendChild(classSeqElement);
+		regForm.appendChild(usernameElement);
+		regForm.appendChild(checkListElement);
+		regForm.appendChild(contentElement);
+	}
+
+	var classSeq = /*[[${class.seq}]]*/;
+	document.getElementById("classSeq").value = classSeq;
+	regForm.submit();
+
+}
+
+function makeOfflineLessonInfo(lessonlength)
+{		
+	var checkTable = document.getElementById("printCheckTable");
+	var colgroup;
+	var col;
+	var thead;
+	var tr;
+	var th;
+	var btn;
+	
+	colgroup = document.createElement("colgroup");
+	
+	col = document.createElement("col");
+	col.setAttribute("style","width:90px;");
+	colgroup.appendChild(col);
+	
+	thead = document.createElement("thead");
+	tr = document.createElement("tr");
+	th = document.createElement("th");
+	
+	th.innerHTML="이름";
+	tr.appendChild(th);
+	
+	for(var i =0; i<lessonlength; i++){
+		col = document.createElement("col");
+		col.setAttribute("style","width:*;");
+		colgroup.appendChild(col);
+			
+		th = document.createElement("th");
+		th.innerHTML = i+1 +"강";		
+		tr.appendChild(th);		
+	}
+	col = document.createElement("col");
+	col.setAttribute("style","width:240px;");
+	colgroup.appendChild(col);
+	
+	th = document.createElement("th");
+	th.innerHTML = "학생관리내용";
+	tr.appendChild(th);
+	thead.appendChild(tr);
+	
+	checkTable.appendChild(colgroup);
+	checkTable.appendChild(thead);
+}
+
+function makeAttendanceList(){
+	
+	var listLesson = /*[[${listLesson}]]*/;
+	var lessonlength = listLesson.length;
+	
+	var tbody = document.getElementById("attendanceInfoList");
+	var idx = tbody.rows.length;
+
+	
+	var printlist = document.getElementById("checkInfoList");
+
+	makeOfflineLessonInfo(lessonlength);
+	
+	for(var i=0; i<idx; i++){
+		var realname = tbody.rows[i].childNodes[0].childNodes[0].childNodes[0].textContent;
+		var username = tbody.rows[i].childNodes[0].childNodes[0].childNodes[1].textContent;
+		var content = document.getElementById(username).value;
+		
+		var row = printlist.insertRow();
+		
+		var tempName = row.insertCell(0);
+		tempName.innerHTML = realname;
+		
+		for(var j=1; j<=lessonlength; j++){
+			var temp = row.insertCell(j);
+			temp.innerHTML = "□";
+			$( "input[id='"+username+"_check']:checked" ).each (
+					function ()
+					{
+						if($(this).val()== j ){
+							temp.innerHTML = "■";
+							return;
+						}
+					}
+				);	
+		}
+		
+		var tempContent = row.insertCell(lessonlength+1);
+		tempContent.innerHTML = content;
+	}
+}
+
+function onClickCheckListPrint(){
+
+	makeAttendanceList();
+	
+    const html = document.querySelector('html');
+	const printContents = document.querySelector('#printCheckList').innerHTML;
+	const printDiv = document.createElement('div');
+	printDiv.className = 'print-div';
+	 
+	html.appendChild(printDiv);
+	printDiv.innerHTML = printContents;
+	document.body.style.display = 'none';
+	window.print();
+	document.body.style.display = 'block';
+	printDiv.style.display = 'none'; 
+ 
+	printDiv.remove();
+	
+	var table = document.getElementById("printCheckTable");
+	table.innerHTML="";
+	
+	var caption = document.createElement('caption');
+	caption.innerHTML = "출력용출석부";
+	var tbody = document.createElement('tbody');
+	tbody.setAttribute("id", "checkInfoList");
+	
+	table.appendChild(caption);
+	table.appendChild(tbody);
+	
+}
+
+function onClickMemberReview(username){
+	
+	var temp = document.getElementById(username);
+	var content = temp.value;
+	
+	memberReviewSubmit(username,content);
+}
+
+function memberReviewSubmit(username,content){
+	var reqObj = new Object();
+	
+	reqObj.classSeq = /*[[${class.seq}]]*/;
+	reqObj.username = username;
+	reqObj.content = content;
+    
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/classMemberReviewSubmit}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+        
+    request.fail(function(jqXHR, textStatus){ 
+        alert(textStatus);
+    });
+}
+
+</script>  			
+	<div id="classMemberList">     			
+		<div class="table" >
+			<table id="checkTable" class="studentcheck" summary="출석부">
+				<caption>출석부</caption>
+				<tbody id="attendanceInfoList"></tbody>
+			</table>
+		</div>
+		<div id = "attendanceEmpty" style="text-align:center;">정보가 없습니다.</div> 	
+		<div class="btnWrap"> 
+			<span class="btnBasic light"><button type="button" onclick="onClickAttendanceSubmit();">적용</button></span>
+			<span class="btnBasic blue"><button type="button" onclick="onClickCheckListPrint();">출석부 출력</button></span>
+		</div> 						  			
+	</div>
+	<div id="printCheckList" style="display:none">
+		<h4><span><th:block th:text="${class.name}"/> 출석부</span></h4>
+		<div class="table" id="printCheckList" >
+			<table id="printCheckTable" class="studentcheck" summary="출석부">
+				<caption>출력용출석부</caption>
+				<tbody id="checkInfoList"></tbody>
+			</table>
+		</div>	
+	</div>
+	<form name="regForm" th:action="@{/myroom/classAttendanceSubmit}" id="regForm" method="post" enctype="multipart/form-data">
+		<input type="hidden" id="classSeq" name="classSeq">		
+	</form>
+</div>
+</body>
+</html>

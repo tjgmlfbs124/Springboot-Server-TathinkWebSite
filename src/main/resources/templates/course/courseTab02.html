@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+	<div th:fragment="courseTab02" class="tabCont" id="service2" style="display:none;">
+		<div class="tb01">
+			<table border="1" cellspacing="0" summary="오프라인 강좌 리스트">
+				<caption>오프라인 강좌 리스트</caption>
+				<colgroup>
+					<col width="60px">
+					<col width="">
+					<col width="150px">
+					<col width="120px">
+				</colgroup>
+				<thead>
+					<tr>
+						<th scope="colgroup">차시</th>
+						<th scope="col">강좌명</th>
+						<th scope="col">담당선생님</th>
+						<th scope="col">교육비</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="classData : ${offlineStudyInfoData.listStudyInfo}">
+						<th scope="row" th:utext="${classData.offlineStudyInfo.no}">차시</th>
+						<td class="cltt" style="overflow: hidden;text-overflow:ellipsis;max-width: 350px;white-space: nowrap;">
+							<th:block th:if="${member==null || classData.offlineClass==null}" th:text="${classData.offlineStudyInfo.studyName}" />
+							<a th:unless="${member==null || classData.offlineClass==null}" class="cltt" th:href="@{${'/course/offlineclass?offlineStudyInfoSeq='+classData.offlineStudyInfo.seq}}" th:utext="${classData.offlineStudyInfo.studyName}" >강좌 이름</a>
+						</td>
+						<td th:if="${classData.teacher==null}" th:utext="${'-'}">테스트 선생님</td>
+						<td th:unless="${classData.teacher==null}" th:utext="${classData.teacher.realname}">테스트 선생님</td>
+						<td th:if="${classData.offlineClass==null}" th:utext="${'-'}">\20,000</td>
+						<td th:unless="${classData.offlineClass==null}" th:utext="${classData.offlineClass.cost + ' 원'}">\20,000</td>
+					</tr>
+	     		</tbody>
+			</table>
+		</div>
+		<div id = "empty" style="text-align:center;">정보가 없습니다.</div>
+	</div>
+</body>
+</html>

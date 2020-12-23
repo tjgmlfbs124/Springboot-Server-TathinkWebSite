@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+	<div th:fragment="courseTab04" class="tabCont" id="service4" style="display: none;">
+		<div th:each="kitData, kitStat : ${listKit}" th:classappend="${kitStat.last==true}?'booklist lt_list':'booklist'">
+			<div class="kitleftCon">
+				<div th:if="${kitData.kitImg01Path==null || (kitData.kitImg01Path=='')}" class="thmb"></div>
+				<div th:unless="${kitData.kitImg01Path==null || (kitData.kitImg01Path=='')}">
+					<img th:src="@{${kitData.kitImg01Path}}" width="186" height="142" alt="교보재 01" />
+				</div>
+			</div>
+			<div class="kitrightCon">
+				<h1>교보재 명</h1>
+				<div class="lectureinfo">
+					<th:block th:text="${kitData.name}" />
+				</div>
+				<h1>교보재소개</h1>
+				<div class="lectureinfo">
+					<ul>
+						<th:block th:utext="${#strings.replace(#strings.escapeXml(kitData.descript),'&#10;','&lt;br&gt;')}" />
+					</ul>
+				</div>
+			</div>
+			<div>
+				<ul class="lst_app">
+					<li>
+						<div th:if="${kitData.kitImg02Path==null || (kitData.kitImg02Path=='')}" class="thmb">
+						</div>
+						<div th:unless="${kitData.kitImg02Path==null || (kitData.kitImg02Path=='')}">
+							<img th:src="@{${kitData.kitImg02Path}}" width="186" height="142" alt="교보재 02" />
+						</div>					
+					</li>
+					<li>
+						<div th:if="${kitData.kitImg03Path==null || (kitData.kitImg03Path=='')}" class="thmb"></div>
+						<div th:unless="${kitData.kitImg03Path==null || (kitData.kitImg03Path=='')}">
+							<img th:src="@{${kitData.kitImg03Path}}" width="186" height="142" alt="교보재 03" />
+						</div>
+					</li>
+					<li>
+						<div th:if="${kitData.kitImg04Path==null || (kitData.kitImg04Path=='')}" class="thmb"></div>
+						<div th:unless="${kitData.kitImg04Path==null || (kitData.kitImg04Path=='')}">
+							<img th:src="@{${kitData.kitImg04Path}}" width="186" height="142" alt="교보재 04" />
+						</div>
+					</li>
+					<li>
+						<div th:if="${kitData.kitImg05Path==null || (kitData.kitImg05Path=='')}" class="thmb"></div>
+						<div th:unless="${kitData.kitImg05Path==null || (kitData.kitImg05Path=='')}">
+							<img th:src="@{${kitData.kitImg05Path}}" width="186" height="142" alt="교보재 05" />
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div id = "kitempty" style="text-align:center;">정보가 없습니다.</div>
+	</div>
+</body>
+</html>

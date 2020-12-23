@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+</head>
+
+<body>                                                
+	<div th:fragment="contents" class="lnb_menu" id="lnb_menu">
+		<ul>
+			<li><a th:href="@{/join/login}" 	th:classappend="${pageName} == 'joinLogin'?on:none">로그인</a></li>
+			<li><a th:href="@{/join/reg}" 		th:classappend="${pageName} == 'joinReg'?on:none">회원가입</a></li>
+			<li><a th:href="@{/join/findIdPwd}" th:classappend="${pageName} == 'joinFindIdPwd'?on:none">아이디·비밀번호 찾기</a></li>
+			<li><a th:href="@{/join/term}" 		th:classappend="${pageName} == 'joinTerm'?on:none">이용약관</a></li>
+			<li><a th:href="@{/join/role}"	 	th:classappend="${pageName} == 'joinRole'?on:none">개인정보 취급방침</a></li>
+			<li><a th:href="@{/join/emailRole}" th:classappend="${pageName} == 'joinEmailRole'?on:none">이메일 무단수집 거부</a></li>
+		</ul>
+	</div>
+</body>
+</html>

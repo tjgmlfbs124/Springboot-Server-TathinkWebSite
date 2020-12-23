@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta name="viewport" content="width=1080" />
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}" />
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}" />
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+
+<!--[if lt IE 9]>
+		<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+		<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+	<![endif]-->
+</head>
+<body>
+	<div id="wrap">
+		<div th:replace="header :: contents"></div>
+		<div id="container">
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>T. A. Think</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think</span>
+					<div class="place">
+						<span><a th:href="@{/}">Home</a></span> > 아이디·비밀번호 찾기
+					</div>
+				</div>
+			</div>
+			<div id="contents_container">
+				<div id="lnb" class="lnb">
+					<div th:replace="join/joinLnb :: contents"></div>
+				</div>
+				<div class="subcontents" style="display:">
+					<div class="loginCenter">
+						<div class="intro">
+							<div class="inner">
+								<strong>T.A. Think에 오신 것을 환영합니다.</strong>
+								<p>회원가입 후 로그인하시면 다양한 강의를 신청·이용하실 수 있습니다.</p>
+							</div>
+						</div>
+						<div class="findForm">
+							<div class="component">
+								<h1>아이디 찾기</h1>
+								<div class="box" style="padding:50px;">
+									<label for="TA_name"><th:block th:text="${resultString}"/></label>
+								</div>
+								<div style="margin-top: 20px; text-align: center;">
+									<span class="btnBasic">
+										<a th:href="@{/join/findIdPwd}" style="width: 100px; text-align: center; color: #ffffff;">확인</a>
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

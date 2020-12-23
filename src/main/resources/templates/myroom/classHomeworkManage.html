@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="homeworkManageBox" style="display:none">
+<script th:inline="javascript">
+	var homeworkManageBox = document.getElementById("homeworkManageBox");;
+	var gHomeworkSeq=0;;
+	var gSearchHWmanageWord = "";
+	var gSearchHWmanageOption = "ALL";
+	var gSearchHWmanagePageIdx= 0;
+		
+	var reportList = new Array();
+	
+	function showHomeworkManage(homeworkSeq)
+	{
+		gHomeworkSeq=homeworkSeq;
+		homeworkManageBox.style.display="block";
+		searchHomeworkManage("ALL","", 0);
+	}
+	
+	function hideHWmanageListBox()
+	{
+		homeworkManageBox.style.display="none";
+	}
+	
+	function isHideHWmanageListBox()
+	{
+		if(homeworkManageBox.style.display == "none")
+			return true;
+		
+		return false;
+	}
+	
+	function searchHomeworkManagePage(page)
+	{
+		searchHomeworkManage(gSearchHWmanageOption, gSearchHWmanageWord, page);
+	}
+	
+	function searchHomeworkManage(option, word, page)
+	{	
+		var reqObj = new Object();
+		
+		gSearchHWmanageWord = word;
+		gSearchHWmanageOption = option;
+		gSearchHWmanagePageIdx = page;
+		
+		reqObj.classSeq = /*[[${class.seq}]]*/;
+		reqObj.homeworkSeq = gHomeworkSeq;
+	    reqObj.word = word;
+	    reqObj.option = option;
+	    reqObj.pageIdx = page;
+	        
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/listClassMemberReport}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.done(makeHWmanageList);
+	    
+	    request.fail(function(jqXHR, textStatus){ 
+	        alert(textStatus);
+	    });
+	}
+	
+	function makeHWmanageList(data)
+	{
+		var responseData = JSON.parse(data);
+	    
+	  	if(!responseData)
+	  	{
+	     	alert("세션이 만료되어 재접속이 필요합니다.");
+	     	return false;
+	  	}      
+	  	
+	  	if(responseData.error != null)
+	  	{
+	     	alert(responseData.error);
+	     	return false;
+	  	}
+	  	
+	  	clearHWmanage();
+	  	
+	  	if(isHideHWmanageListBox())
+		{
+	  		showHWmanageListBox();
+		}
+		
+	  	var reportTotalCnt = document.getElementById("reportTotalCnt");
+	  	reportTotalCnt.innerHTML = "Total : <span class='red'></span>"+responseData.offlineClassMemberList.length+"건";
+	  	
+	  	if(responseData.offlineClassMemberList.length>0)
+	  		document.getElementById("hwManageEmpty").style.display="none";
+	  	
+	  	for(i = 0; i < responseData.offlineClassMemberList.length; i ++)
+		{
+	  		addHomeworkManage(responseData.offlineClassMemberList[i]);
+		}
+	  	
+	    if(responseData.pageCnt != 0)
+	    {
+	    	addHomeworkManagePaginate(responseData);
+	    }
+	}
+	
+	function clearHWmanage()
+	{
+	    var reportListContainer = document.getElementById("reportListContainer");
+	    var hwManagePaginate = document.getElementById("hwManagePaginate");	
+	    document.getElementById("hwManageEmpty").style.display="";
+	    
+	    reportListContainer.innerHTML = "";
+	    hwManagePaginate.innerHTML = "";
+	    
+	    reportList = new Array();
+	    
+	}
+	
+	function addHomeworkManage(homeworkData)
+	{	
+		var reportListContainer;
+		var row;
+		var realnameCell;
+		var usernameCell;
+		var stateCell;
+		var reportPointCell;
+		var reportDateCell;
+		var fileCell;
+	
+		reportListContainer = document.getElementById("reportListContainer");
+	  	row = reportListContainer.insertRow();
+	  	
+	  	realnameCell   = row.insertCell(0);
+	  	usernameCell   = row.insertCell(1);
+	  	stateCell   = row.insertCell(2);
+	  	reportPointCell   = row.insertCell(3);
+	  	reportDateCell   = row.insertCell(4);
+	  	fileCell = row.insertCell(5);
+	  	
+	  	realnameCell.setAttribute("class", "alcenter");
+	  	realnameCell.innerHTML = homeworkData.realname;
+	  	
+	  	usernameCell.setAttribute("class", "alcenter");
+	  	usernameCell.innerHTML = homeworkData.username;
+	  		  	
+	  	reportDateCell.setAttribute("class", "alcenter");
+	  	var date = new Date(homeworkData.reportRegDate);
+	  	reportDateCell.innerHTML = date.toISOString().slice(0,10);
+	  	
+		var pointBox = document.createElement("input");
+		pointBox.setAttribute("type", "number");
+		pointBox.setAttribute("id", "reportPoint");
+		pointBox.setAttribute("name", "reportPoint");
+		pointBox.setAttribute("min", "0");
+		pointBox.setAttribute("max", "100");
+		pointBox.setAttribute("style", "width: 45px; maxlength:3");
+					  		  	
+	  	if(homeworkData.point!=null && homeworkData.point!=""){
+	  		pointBox.value = homeworkData.point;	  		
+	  	}
+	  	else{
+	  		pointBox.value = "";
+	  	}
+	  	reportPointCell.setAttribute("class", "alcenter");
+	  	reportPointCell.appendChild(pointBox);
+	  	
+	  	stateCell.setAttribute("class", "alcenter");
+	  		  	
+	  	if(homeworkData.listAttachedFiles.length > 0){
+	  	
+	  		stateCell.innerHTML ="제출";
+	  		
+		  	var reportSeq = document.createElement("input");
+		  	reportSeq.setAttribute("type", "hidden");
+		  	reportSeq.setAttribute("id", "reportSeq");
+		  	reportSeq.setAttribute("name", "reportSeq");
+		  	reportSeq.value = homeworkData.reportSeq;
+		  	usernameCell.appendChild(reportSeq);
+		  	
+		  	var span = document.createElement("span");
+			span.setAttribute("class","btnBasic blue");
+			
+			var btn = document.createElement("button");
+			btn.setAttribute("type","button");
+			btn.setAttribute("id","btn04");
+			btn.setAttribute("onclick","javascript:onClickDownloadReport('"+homeworkData.realname+"','"+homeworkData.username+"','"+homeworkData.listAttachedFiles+"')");
+			
+			var report = new Object();
+			report.username = homeworkData.username;
+			report.realname = homeworkData.realname;
+			report.fileList = homeworkData.listAttachedFiles;
+			reportList.push(report);
+			
+			btn.textContent = "다운로드";
+			
+			span.appendChild(btn);  	
+			fileCell.appendChild(span);
+			fileCell.setAttribute("style", "text-align:center;");
+	  	}else{
+	  		stateCell.innerHTML ="미제출";
+	  		reportPointCell.innerHTML = "-";
+	  		reportDateCell.innerHTML = "-";
+	  		fileCell.innerHTML="-";
+	  		fileCell.setAttribute("style", "text-align:center;");
+	  	}
+
+	}
+	
+	function addHomeworkManagePaginate(pageData)
+	{	
+		var hwManagePaginate = document.getElementById("hwManagePaginate");
+		var first  = document.createElement("a");
+		
+		first.setAttribute("class", "first");
+	  	first.setAttribute("href", "javascript:{}");
+	  	first.setAttribute("onclick", "searchHomeworkManagePage('0');");
+	  	first.innerHTML="맨처음으로";
+	  	hwManagePaginate.appendChild(first);
+	  	    
+	  	if(!(pageData.currPageIdx < 6))
+	  	{
+	    	var pre = document.createElement("a");
+	    	pre.setAttribute("class", "pre");
+	    	pre.setAttribute("href", "javascript:{}");
+	    	pre.setAttribute("onclick", "searchHomeworkManagePage('"+(pageData.startPageIdx-2)+"');");
+	    	pre.innerHTML="이전페이지";
+	    	hwManagePaginate.appendChild(pre);
+	  	}   
+	  
+	  	var pageBox  = document.createElement("div");
+	  	hwManagePaginate.appendChild(pageBox);
+	  
+	  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+	  	{
+	    	if(i!=pageData.currPageIdx)
+	    	{
+	      		var p  = document.createElement("a");
+	      		p.setAttribute("href", "javascript:{}");
+	      		p.setAttribute("onclick", "searchHomeworkManagePage('"+(i-1)+"');");
+	      		p.innerHTML=""+i;
+	      
+	      		pageBox.appendChild(p);
+	    	}
+	    	else
+	    	{
+	      		var s  = document.createElement("strong");
+	      		s.setAttribute("href", "javascript:{}");
+	      		s.setAttribute("onclick", "searchHomeworkManagePage('"+(i-1)+"');");
+	      		s.innerHTML=""+i;
+	      		pageBox.appendChild(s);
+	    	}
+	  	}    
+	   	
+	  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+	  	{
+	    	var next = document.createElement("a");
+	    	next.setAttribute("class", "next");
+	    	next.setAttribute("href", "javascript:{}");
+	    	next.setAttribute("onclick", "searchHomeworkManagePage('"+pageData.endPageIdx+"');");
+	    	next.innerHTML="다음페이지";
+	    	hwManagePaginate.appendChild(next);
+	  	}  
+	  
+	  	var last   = document.createElement("a");
+	  	last.setAttribute("class", "last");
+	  	last.setAttribute("href", "javascript:{}");
+	  	last.setAttribute("onclick", "searchHomeworkManagePage('"+(pageData.pageCnt-1)+"');");
+	  	last.innerHTML="맨마지막";
+	  	hwManagePaginate.appendChild(last);
+	}
+	
+	function onClickSearchHomeworkManage()
+	{
+		var searchHomeworkManageValue = document.getElementById("searchHomeworkManageValue");
+		var searchHomeworkManageType = document.getElementById("searchHomeworkManageType");
+		
+		searchHomeworkManage(searchHomeworkManageType.value, searchHomeworkManageValue.value,0);
+	}
+	
+	function onClickHomeworkManageSubmit()
+	{	
+		var seqRow = "";
+		
+		$( "input[name='reportSeq']" ).each (
+			function ()
+			{
+				seqRow = seqRow + $(this).val()+":" ;
+			}
+		);
+		
+		seqRow = seqRow.substring(0,seqRow.lastIndexOf( ":"));
+		
+		var pointRow = "";
+		
+		$( "input[name='reportPoint']" ).each (
+			function ()
+			{
+				pointRow = pointRow + $(this).val()+":" ;
+			}
+		);
+		
+		pointRow = pointRow.substring(0,pointRow.lastIndexOf( ":"));
+		
+		if(seqRow == '' || pointRow == '')
+		{
+		  alert("평가할 과제가 없습니다.");
+		  return false;
+		}
+		
+		if(confirm("과제평가를 저장 하시겠습니까?"))
+		{
+			reportResultSubmit(seqRow, pointRow);
+		}	
+	}
+	function reportResultSubmit(seqRow, pointRow){
+		
+		var reqObj = new Object();
+		
+		reqObj.classSeq = /*[[${class.seq}]]*/;
+		reqObj.homeworkSeq = gHomeworkSeq;
+		reqObj.seqList = seqRow;
+		reqObj.pointList = pointRow;
+	    reqObj.word = gSearchHWmanageWord;
+	    reqObj.option = gSearchHWmanageOption;
+	    reqObj.pageIdx = gSearchHWmanagePageIdx;
+	        
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/submitReportResult}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.success(alert("과제평가가 저장되었습니다."));
+	    request.done(makeHWmanageList);
+	    
+	    request.fail(function(jqXHR, textStatus){ 
+	        alert(textStatus);
+	    });
+	}
+	
+	function onClickDownloadReport(realname, username,listAttachedFiles)
+	{
+	    // Get the modal
+	    var modal = document.getElementById('downloadReportDlg');
+
+	    var reportClassTitle = document.getElementById('reportClassTitle');
+	    var reportClassUser = document.getElementById('reportClassUser');
+	    
+	    reportClassTitle.innerHTML = /*[[${class.name}]]*/;
+	    reportClassUser.innerHTML = realname + "("+username+")";
+	    modal.style.display = "block";
+
+	    var reportBoxAttField = document.getElementById('reportBoxAttField');
+	    makeReportFileList(reportBoxAttField,listAttachedFiles);
+	    
+	    window.onclick = function(event) {
+	        if (event.target == modal) {
+	            modal.style.display = "none";
+	        }
+	    }
+	}
+	
+	function onClickDownloadReportAll()
+	{
+
+		if(reportList.length<=0){
+			alert("첨부파일이 없습니다.");
+			return;
+		}
+	    // Get the modal
+	    var modal = document.getElementById('downloadReportAllDlg');
+	    var reportClassTitle = document.getElementById('reportClassAllTitle');
+	    reportClassTitle.innerHTML = /*[[${class.name}]]*/;
+	    
+	    modal.style.display = "block";
+	    
+	    makeReportFileListAll(reportList);
+	    
+	    window.onclick = function(event) {
+	        if (event.target == modal) {
+	            modal.style.display = "none";
+	        }
+	    }
+	}
+	
+	function makeReportFileList(reportBoxAttField, reportFiles)
+	{
+		reportBoxAttField.innerHTML = "";
+		var listAttachedFiles = reportFiles.split(",");
+		for(i = 0; i < listAttachedFiles.length; i ++)
+		{
+			var div = document.createElement("div");
+			var a = document.createElement("a");
+			var span = document.createElement("span");
+			var fileName = listAttachedFiles[i];
+			
+			var arraySplitUrl = fileName.split("/");
+			var nArLength = arraySplitUrl.length;
+			var arFileName = arraySplitUrl[nArLength-1];
+			
+			span.setAttribute("class", "addfile");
+			span.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 300px;white-space: nowrap; font-weight:bold;cursor:pointer");
+			span.textContent = arFileName;
+			
+			downloadReportFileSetClickListener(a, fileName);
+
+			
+			a.appendChild(span);
+			div.appendChild(a);
+			reportBoxAttField.appendChild(div);
+		}
+	}
+	
+	function makeReportFileListAll(data)
+	{	  		  	
+		document.getElementById('reportListBox').innerHTML="";		
+			  	
+	  	if(data.length>0)
+	  	{
+	  		for (var i =0; i<data.length; i++){
+	  			addReportAll(data[i]);
+	  		}
+	  	}
+	  	
+
+	}
+	
+	function addReportAll(data)
+	{	
+		var reportListBox;
+		var row;
+		var userCell;
+		var fileCell;
+		
+		reportListBox = document.getElementById('reportListBox');
+	  	row = reportListBox.insertRow();
+	  	
+	  	userCell = row.insertCell(0);
+	  	fileCell = row.insertCell(1);
+
+	  	userCell.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 300px;white-space: nowrap;");
+	  	userCell.textContent = data.realname + "("+data.username+")";
+	  	userCell.innerHTML = userCell.innerHTML.replace(/\n\r?/g, '<br />');
+		
+	  	addFileList(fileCell, data.fileList);	
+	}
+	
+	function addFileList(filebox, listAttachedFiles){				
+		for(i = 0; i < listAttachedFiles.length; i ++)
+		{
+			var div = document.createElement("div");
+			var a = document.createElement("a");
+			var span = document.createElement("span");
+			var fileName = listAttachedFiles[i];
+			
+			var arraySplitUrl = fileName.split("/");
+			var nArLength = arraySplitUrl.length;
+			var arFileName = "/" + arraySplitUrl[nArLength-2] + "/" + arraySplitUrl[nArLength-1];
+			
+			span.setAttribute("class", "addfile");
+			span.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 300px;white-space: nowrap; font-weight:bold;cursor:pointer");
+			span.textContent = arFileName;
+			
+			downloadReportFileSetClickListener(a, fileName);
+
+			
+			a.appendChild(span);
+			div.appendChild(a);
+			filebox.appendChild(div);
+		}
+	}
+	function downloadReportFileSetClickListener(a, fileName)
+	{
+		a.onclick=function()
+		{
+			downloadReportFile(fileName);
+		};
+	}
+	
+	function downloadReportFile(fileName){
+		document.getElementById('reportFilePath').value = fileName;
+		document.getElementById('reportDownloadForm').submit();
+	}
+	
+	function downloadReportAll(){
+		document.getElementById('classSeq').value = /*[[${class.seq}]]*/;
+		document.getElementById('homeworkSeq').value = gHomeworkSeq;
+		document.getElementById('reportDownloadAllForm').submit();
+	}
+</script>	
+	<div id="homeworkManageList">
+		<div class="tableTop">
+			<p id="reportTotalCnt" class="count"></p>
+			<div class="searchTable"> 
+				<span class="formElement">
+					<select id="searchHomeworkManageType" style="width:105px;">
+					    <option value="ALL">전체</option>
+						<option value="NAME">이름</option>
+						<option value="ID">아이디</option>
+					</select>
+				</span>
+				<div class="search">
+					<input type="text" id="searchHomeworkManageValue">
+					<button type="submit" id="searchHomeworkManageAction" name="searchHomeworkManageAction" onclick="onClickSearchHomeworkManage();">검색하기</button>
+				</div>
+			</div>
+		</div> 
+		<div class="tbList">
+			<table border="1" cellspacing="0" summary="과제 리스트">
+				<caption>수강생 리스트</caption>
+				<colgroup>
+					<col width="100">
+					<col width="">
+					<col width="100">
+					<col width="100">
+					<col width="160">
+					<col width="160">
+				</colgroup>
+				<thead>
+					<tr>
+						<th scope="col">성명</th>
+						<th scope="col">아이디</th>
+						<th scope="col">제출여부</th>
+						<th scope="col">평가점수</th>
+						<th scope="col">제출일</th>					
+						<th scope="col">첨부파일</th>
+					</tr>
+				</thead>
+				<tbody id="reportListContainer"></tbody>
+			</table>
+		</div>
+		<div id = "hwManageEmpty" style="text-align:center;">정보가 없습니다.</div> 	
+		<div class="btnWrap"> 
+			<span class="btnBasic light"><button id="homeworkBoxbtnList" type="button" onclick="onClickHomeworkList();">목록</button></span>
+			<span class="btnBasic light"><button type="button" onclick="onClickHomeworkManageSubmit();">평가적용</button></span>
+			<span class="btnBasic blue"> <button type="button"  onclick="onClickDownloadReportAll();">첨부파일 일괄다운로드</button></span>			
+		</div>
+		<div id="hwManagePaginate" class="paginate"></div>		
+	</div>
+	<div th:replace="myroom/widgetClassReport :: contents"></div>
+	<div th:replace="myroom/widgetClassReportAll :: contents"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="writeFileBox" style="display:none;">
+<script th:inline="javascript">
+	var fileDelete = "";
+	var fileNum = 0;
+	var writeFileBox = document.getElementById("writeFileBox");
+	
+	function hideFileWrite()
+	{
+		writeFileBox.style.display="none";
+		removeMyEditer();
+		location.href = "#contents_container";
+	}
+	
+	function showFileWrite(seq, title, listAttFiles, content)
+	{
+		var writeFileBoxSeq = document.getElementById("writeFileBoxSeq");
+		var writeFileBoxTitle = document.getElementById("writeFileBoxTitle");
+		var writeFileBoxDelFiles = document.getElementById("writeFileBoxDelFiles");
+		var writeFileBoxAttachedFileBox = document.getElementById("writeFileBoxAttachedFileBox");
+		
+		var classSeq = document.getElementById("classFileSeq");
+		
+		createMyEditer("writeFileBoxContent", "writeFileBoxConfirm", "writeFileBoxForm", content, /*[[@{/smartEditor/SmartEditor2Skin}]]*/);
+		
+		writeFileBoxSeq.value = seq;
+		writeFileBoxTitle.value = title;
+		
+		classSeq.value = /*[[${class.seq}]]*/;
+		
+		if(listAttFiles != null)
+			makeWriteBoxAttachedFileList(writeFileBoxAttachedFileBox ,listAttFiles);
+		
+		writeFileBox.style.display="block";
+		location.href = "#writeFileBox";
+	}
+	
+	function makeWriteBoxAttachedFileList(writeFileBoxAttachedFileBox, listAttachedFiles)
+	{
+		writeFileBoxAttachedFileBox.innerHTML = "";
+		
+		for(i = 0; i < listAttachedFiles.length; i ++)
+		{
+			var div = document.createElement("div");
+			var span = document.createElement("span");
+			var a = document.createElement("a");
+			var img = document.createElement("img");
+			
+			img.src=/*[[@{/images/ui/common/btn_del.png}]]*/;			
+			removeFileAttachedFileSetClickListener(a,listAttachedFiles[i]);
+
+			var fileName = listAttachedFiles[i];
+			var arraySplitUrl = fileName.split("/");
+			var nArLength = arraySplitUrl.length;
+			var arFileName = arraySplitUrl[nArLength-1];
+			
+			span.setAttribute("class", "addfile");
+			span.textContent = arFileName;
+			
+			a.appendChild(img);
+			span.appendChild(a);
+			div.appendChild(span);
+			writeFileBoxAttachedFileBox.appendChild(div);
+		}
+	}
+	
+	function removeFileAttachedFileSetClickListener(a, fileName)
+	{
+		a.onclick=function()
+		{
+			onClickRemoveFileAttachedFile(a,fileName);
+		};
+	}
+	
+	function onClickRemoveFileAttachedFile(obj, fileName)
+	{
+		document.getElementById('writeFileBoxAttachedFileBox').removeChild(obj.parentNode.parentNode);
+		if(fileNum > 0)
+			fileDelete += ";";
+		fileDelete += fileName;
+		fileNum++;
+		document.getElementById('writeFileBoxDelFiles').value = fileDelete;
+	}
+
+	function onClickRemoveFileFileItem(obj)
+	{
+		document.getElementById('writeFileBoxFileItemBox').removeChild(obj.parentNode);
+	}
+
+	function onClickAttachFileFileItem()
+	{
+    	var div = document.createElement('div');
+    	div.innerHTML = document.getElementById('writeFileBoxPreSet').innerHTML;
+    	document.getElementById('writeFileBoxFileItemBox').appendChild(div);
+    	var inputName = div.getElementsByTagName('input');
+    	inputName[0].setAttribute("id", "writeFileBoxFileItem");
+    	inputName[0].setAttribute("name", "attachFiles");
+	}
+	
+	function onClickFileWriteCancle()
+	{
+		if(isHideFileListBox())
+			searchFile(gSearchFileOption, gSearchFileWord, gSearchFilePageIdx);
+	}	
+</script>
+	<h4>강좌자료 글쓰기</h4>
+	<form name="writeFileBoxForm" id="writeFileBoxForm" th:action="@{/myroom/fileWriteSubmit}" onsubmit="return true;" method="post" enctype="multipart/form-data">
+		<input type="hidden" id="classFileSeq" name="classSeq">        
+		<input type="hidden" id="writeFileBoxSeq" name="seq">
+		<input type="hidden" id="writeFileBoxDelFiles" name="delFiles">
+		<div class="table">
+			<table>
+				<caption>강좌자료 글쓰기 서식</caption>
+				<colgroup>
+					<col style="width:200px">
+					<col style="width:">
+				</colgroup>
+				<tbody>
+					<tr>
+						<th scope="row"><label for="title">제목</label></th>
+						<td>
+							<span class="formElement">
+								<input type="text" id="writeFileBoxTitle" name="title" placeholder="제목을 입력하세요." style="width:500px;" maxlength="" >
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="TA_addfile">파일첨부</label>
+						</th>
+						<td>                     
+							<div id="writeFileBoxPreSet" style="display:none">
+								<input type="file" id="file" name="file" style="right:0; width:510px; height:35px; margin:0; padding:0; border:0; overflow:hidden;">
+								<a id="" href="javascript:{}" onclick="onClickRemoveFileFileItem(this);"><img th:src="@{/images/ui/common/btn_del.png}"/></a>
+							</div>
+							<div id="writeFileBoxFileItemBox"></div>
+							<span class="btnBasic blue">
+								<button type="button" onclick="onClickAttachFileFileItem();">추가</button>
+							</span>
+							<div id="writeFileBoxAttachedFileBox"></div>
+							<p class="desc">5MB 이하의 파일만 업로드 가능합니다.</p>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2" scope="row">
+							<textarea name="editor" id="writeFileBoxContent" style="width: 700px; height: 400px;"></textarea>
+						</td>
+					</tr>                
+				</tbody>
+			</table>
+		</div>
+		<div class="btnWrap"> 
+			<span class="btnLarge light"><a href="javascript:{}" onclick="onClickFileWriteCancle();">취소</a></span> 
+			<span class="btnLarge"><button id="writeFileBoxConfirm" type="button">확인</button></span>             
+		</div>
+	</form>
+</div>
+</body>
+</html>

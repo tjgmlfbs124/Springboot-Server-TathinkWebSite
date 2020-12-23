@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta name="viewport" content="width=1080" />
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}" />
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}" />
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+
+<!--[if lt IE 9]>
+		<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+		<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+	<![endif]-->
+	
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready( function() {	
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	var seq = /*[[${kitSeq}]]*/;
+ 	if (seq==null){
+		;
+	}else{
+		showKitView(seq);
+	}
+});
+
+function showKitView(kitSeq)
+{
+	var reqObj = new Object();
+	var pwd = null;
+
+    reqObj.kitSeq = kitSeq;
+    
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/getKitInfo}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(function (data)
+    {      	
+    	var value="";
+    	var responseData = JSON.parse(data);
+    	
+      	if(!responseData)
+      	{
+         	alert("세션이 만료되어 재접속이 필요합니다.");
+         	return false;
+      	}    
+      	
+    	if(responseData.error != null)
+    	{
+    		alert(responseData.error);
+    		return false;
+    	}
+    	
+    	var seq = document.getElementById("seq");
+    	var code = document.getElementById("code");
+		var name = document.getElementById("name");
+		var descript = document.getElementById("descript");
+		var kitImg01Path = document.getElementById("prev_PREVIEW_IMG_DIV1");
+    	var kitImg02Path = document.getElementById("prev_PREVIEW_IMG_DIV2");
+    	var kitImg03Path = document.getElementById("prev_PREVIEW_IMG_DIV3");
+		var kitImg04Path = document.getElementById("prev_PREVIEW_IMG_DIV4");
+		var kitImg05Path = document.getElementById("prev_PREVIEW_IMG_DIV5");
+		var username = document.getElementById("username");
+		
+		var rootPath = /*[[@{/}]]*/
+		
+		seq.value = responseData.seq;
+		
+		if(responseData.kitImg01Path == null || responseData.kitImg01Path.length < 1)
+		{
+			kitImg01Path.src="";
+			document.getElementById("kitImg01Path").value = "";
+		}
+		else
+		{
+			kitImg01Path.src = rootPath+responseData.kitImg01Path.substr(1);
+			document.getElementById("kitImg01Path").value = responseData.kitImg01Path;
+		}
+		
+		if(responseData.kitImg02Path == null || responseData.kitImg02Path.length < 1)
+		{
+			kitImg02Path.src="";
+			document.getElementById("kitImg02Path").value = "";
+		}
+		else
+		{
+			kitImg02Path.src = rootPath+responseData.kitImg02Path.substr(1);
+			document.getElementById("kitImg02Path").value = responseData.kitImg02Path;
+		}
+		
+		if(responseData.kitImg03Path == null || responseData.kitImg03Path.length < 1)
+		{
+			kitImg03Path.src="";
+			document.getElementById("kitImg03Path").value = "";
+		}
+		else
+		{
+			kitImg03Path.src = rootPath+responseData.kitImg03Path.substr(1);
+			document.getElementById("kitImg03Path").value = responseData.kitImg03Path;
+		}
+		
+		if(responseData.kitImg04Path == null || responseData.kitImg04Path.length < 1)
+		{
+			kitImg04Path.src="";
+			document.getElementById("kitImg04Path").value = "";
+		}
+		else
+		{
+			kitImg04Path.src = rootPath+responseData.kitImg04Path.substr(1);
+			document.getElementById("kitImg04Path").value = responseData.kitImg04Path;
+		}
+		
+		if(responseData.kitImg05Path == null || responseData.kitImg05Path.length < 1)
+		{
+			kitImg05Path.src="";
+			document.getElementById("kitImg05Path").value = "";
+		}
+		else
+		{
+			kitImg05Path.src = rootPath+responseData.kitImg05Path.substr(1);
+			document.getElementById("kitImg05Path").value = responseData.kitImg05Path;
+		}
+
+		code.value = responseData.code;
+		name.value = responseData.name;	
+		descript.textContent = responseData.descript;
+			      	
+      	viewData = responseData;
+    });
+    
+    request.fail(function(jqXHR, textStatus){     	
+        alert(textStatus);
+    });
+}
+
+function previewImage(targetObj, previewId, id) {
+    var str = targetObj.value;		
+	var preview = document.getElementById(previewId+id); //div id   
+	var ua = window.navigator.userAgent;
+	var maxSize = 1024 * 1024 * 5;
+	 
+	document.getElementById("uploadFileName"+id).value = targetObj.value.substring(str.lastIndexOf("\\")+1);
+	 
+    if (ua.indexOf("MSIE") > -1) {
+    	targetObj.select();
+
+    	var src = document.selection.createRange().text;
+        var img = document.getElementById(previewId+id);
+        img.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='"+ src + "', sizingMethod='scale')";             
+    }
+    else{		    	
+		var files = targetObj.files;
+		   for ( var i = 0; i < files.length; i++) {			
+				var file = files[i];
+				
+				var imageType = /image.*/;
+				if (!file.type.match(imageType))
+				    continue;
+				
+				var prevImg = document.getElementById("prev_" + previewId+id);
+				if (prevImg) {
+				    preview.removeChild(prevImg);
+				}
+				
+				if (file.size > maxSize){
+					alert("사진의 용량이 5M 이상 입니다.");
+					continue;
+				}
+				
+				var img = document.createElement("img");
+				img.id = "prev_" + previewId+id;
+				img.classList.add("obj");
+				img.file = file;
+				img.style.width = '126px';
+				img.style.height = '156px';
+								
+				preview.appendChild(img);
+				
+				if (window.FileReader) {
+				    var reader = new FileReader();
+				    reader.onloadend = (function(aImg) {
+				        return function(e) {
+				            aImg.src = e.target.result;
+				        };
+				    })(img);
+				    reader.readAsDataURL(file);
+				} else {
+				    if (!document.getElementById("sfr_preview_error_" + previewId + id)) {
+				        var info = document.createElement("p");
+				        info.id = "sfr_preview_error_" + previewId + id;
+				        info.innerHTML = "not supported FileReader";
+				        preview.insertBefore(info, null);
+				    }
+				}
+		 }
+	}
+}
+
+function delPreviewImage(previewId,id){
+	var ua = window.navigator.userAgent;
+	var preview = document.getElementById(previewId+id); 
+	
+	document.getElementById("uploadFileName"+id).value = "";
+	document.getElementById("kitImg0"+id+"Path").value = "";
+	
+	if (ua.indexOf("MSIE") > -1) {
+		if (preview) {
+		    preview.remove();
+		}
+	}
+	else{
+		var prevImg = document.getElementById("prev_" + previewId+id);
+		if (prevImg) {				
+		    preview.removeChild(prevImg);
+		}
+	}
+	
+	var imgFile = document.getElementById("IMG_FILE"+id);
+	imgFile.value = null;
+	imgFile.parentNode.replaceChild(imgFile.cloneNode(true), imgFile);
+	
+}
+
+function regSubmit(){
+	
+	var msg="";
+	if(document.getElementById("name").value == "" || document.getElementById("name").value == "교보재명을 입력하세요."){
+		alert("교보재명을 입력하세요.");
+   		return false;
+	}
+	
+	if(document.getElementById("code").value == "" || document.getElementById("code").value == "교보재코드를 입력하세요."){
+		alert("교보재코드를 입력하세요.");
+   		return false;
+	}
+	
+	if(document.getElementById("descript").value == "" || document.getElementById("descript").value == "교보재 소개 내용을 입력하세요."){
+		alert("교보재 소개 내용을 입력하세요.");
+   		return false;
+	}
+	
+	if(confirm("교보재를 등록하시겠습니까?")){
+		return true;
+	}else{
+		
+		return false;
+	}
+}		
+</script>
+</head>
+
+<body>
+	<div id="wrap">
+		<div th:replace="header :: contents"></div>
+		<div id="container">
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>T. A. Think</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think</span>
+					<div class="place">
+						<span><a th:href="@{/}">Home</a></span> > 관리자 메뉴 > 과목관리</div>
+					</div>
+				</div>
+			</div>
+			<div id="contents_container">
+				<div class="lnb">
+					<div th:replace="admin/adminLnb :: contents"></div>
+				</div>
+				<div class="subcontents" style="display:">					
+					<div id="step02">
+						<form name="regForm" th:action="@{/admin/regKit}" id="regForm" onsubmit="return regSubmit();" method="post" enctype="multipart/form-data">
+							<!-- <input type="hidden" id="teacherUsername" name="teacherUsername"> -->
+							<input type="hidden" id="seq" name="seq" value='-1'>
+							<input type="hidden" id="kitImg01Path" name="kitImg01Path">
+							<input type="hidden" id="kitImg02Path" name="kitImg02Path">
+							<input type="hidden" id="kitImg03Path" name="kitImg03Path">
+							<input type="hidden" id="kitImg04Path" name="kitImg04Path">
+							<input type="hidden" id="kitImg05Path" name="kitImg05Path">
+							<h4>교보재정보 입력</h4>
+							<div class="table">
+								<table class="upphoto">
+									<caption>교재사진입력 서식</caption>
+									<colgroup>
+										<col style="width: 150px;">
+										<col style="width: *;">
+									</colgroup>
+									<tbody>
+										<tr>
+											<td>
+												<div class="join_photo" id="PREVIEW_IMG_DIV1" name="PREVIEW_IMG_DIV1">
+													<img id="prev_PREVIEW_IMG_DIV1" width="130" height="163" alt=""/>
+												</div>
+											</td>
+											<td>
+												<span class="btnTable"> <a href="#none" onclick="delPreviewImage('PREVIEW_IMG_DIV', 1)" id="checkTA_id">사진삭제</a></span>
+												<div class="dotLine">
+													<div class="attachFile" id="attachImgFile1" name="attachImgFile1" style="width: 458px;">
+														<input type="text" class="upload" id="uploadFileName1" name="uploadFileName1" value="사진 파일을 등록해주세요." disabled="disabled" style="width: 328px;" title="사진업로드">
+														<p class="desc">5MB 이하의 jpg, png, gif파일만 업로드 가능합니다.</p>
+														<label for="IMG_FILE1">파일찾아보기</label> 
+														<input type="file" id="IMG_FILE1" name="IMG_FILE1" class="uploadHidden" onchange="previewImage(this, 'PREVIEW_IMG_DIV', 1)">
+													</div>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div class="table">
+								<p class="tableTop02">
+									<span class="star">별표</span>필수입력항목
+								</p>
+								<table>
+									<caption>과목정보를 입력하는 서식</caption>
+									<colgroup>
+										<col style="width: 20%;">
+										<col style="width: *;">
+									</colgroup>
+									<tbody>
+										<tr>
+											<th scope="row">
+												<label for="name">교보재명</label>
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement">													
+													<input type="text" id="name" name="name" placeholder="교보재명을 입력하세요." style="width:100%;" maxlength="200">
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="code">교보재코드</label>
+												<span 	class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement">
+													<input type="text" id="code" name="code" placeholder="교보재코드를 입력하세요." style="width: 228px;" maxlength="20" >
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="descript">소개</label> 
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<textarea rows="5" cols="50" id="descript" name="descript" maxlength="250" placeholder="교보재 소개 내용을 입력하세요." ></textarea>
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<td colspan="2"></td>										
+										</tr>										
+									</tbody>
+								</table>																
+							</div>
+							<div class="table">
+								<table class="upphoto">
+									<caption>교재사진입력 서식</caption>
+									<colgroup>
+										<col style="width: 150px;">
+										<col style="width: *;">
+									</colgroup>
+									<tbody>
+										<tr>
+											<td>
+												<div class="join_photo" id="PREVIEW_IMG_DIV2" name="PREVIEW_IMG_DIV2">
+													<img id="prev_PREVIEW_IMG_DIV2" width="130" height="163" alt=""/>
+												</div>
+											</td>
+											<td>
+												<span class="btnTable"> <a href="#none" onclick="delPreviewImage('PREVIEW_IMG_DIV', 2)" id="checkTA_id">사진삭제</a></span>
+												<div class="dotLine">
+													<div class="attachFile" id="attachImgFile2" name="attachImgFile2" style="width: 458px;">
+														<input type="text" class="upload" id="uploadFileName2" name="uploadFileName2" value="사진 파일을 등록해주세요." disabled="disabled" style="width: 328px;" title="사진업로드">
+														<p class="desc">5MB 이하의 jpg, png, gif파일만 업로드 가능합니다.</p>
+														<label for="IMG_FILE2">파일찾아보기</label> 
+														<input type="file" id="IMG_FILE2" name="IMG_FILE2" class="uploadHidden" onchange="previewImage(this, 'PREVIEW_IMG_DIV', 2)">
+													</div>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div class="table">
+								<table class="upphoto">
+									<caption>교재사진입력 서식</caption>
+									<colgroup>
+										<col style="width: 150px;">
+										<col style="width: *;">
+									</colgroup>
+									<tbody>
+										<tr>
+											<td>
+												<div class="join_photo" id="PREVIEW_IMG_DIV3" name="PREVIEW_IMG_DIV3">
+													<img id="prev_PREVIEW_IMG_DIV3" width="130" height="163" alt=""/>
+												</div>
+											</td>
+											<td>
+												<span class="btnTable"> <a href="#none" onclick="delPreviewImage('PREVIEW_IMG_DIV', 3)" id="checkTA_id">사진삭제</a></span>
+												<div class="dotLine">
+													<div class="attachFile" id="attachImgFile3" name="attachImgFile3" style="width: 458px;">
+														<input type="text" class="upload" id="uploadFileName3" name="uploadFileName3" value="사진 파일을 등록해주세요." disabled="disabled" style="width: 328px;" title="사진업로드">
+														<p class="desc">5MB 이하의 jpg, png, gif파일만 업로드 가능합니다.</p>
+														<label for="IMG_FILE3">파일찾아보기</label> 
+														<input type="file" id="IMG_FILE3" name="IMG_FILE3" class="uploadHidden" onchange="previewImage(this, 'PREVIEW_IMG_DIV', 3)">
+													</div>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div class="table">
+								<table class="upphoto">
+									<caption>교재사진입력 서식</caption>
+									<colgroup>
+										<col style="width: 150px;">
+										<col style="width: *;">
+									</colgroup>
+									<tbody>
+										<tr>
+											<td>
+												<div class="join_photo" id="PREVIEW_IMG_DIV4" name="PREVIEW_IMG_DIV4">
+													<img id="prev_PREVIEW_IMG_DIV4" width="130" height="163" alt=""/>
+												</div>
+											</td>
+											<td>
+												<span class="btnTable"> <a href="#none" onclick="delPreviewImage('PREVIEW_IMG_DIV', 4)" id="checkTA_id">사진삭제</a></span>
+												<div class="dotLine">
+													<div class="attachFile" id="attachImgFile4" name="attachImgFile4" style="width: 458px;">
+														<input type="text" class="upload" id="uploadFileName4" name="uploadFileName4" value="사진 파일을 등록해주세요." disabled="disabled" style="width: 328px;" title="사진업로드">
+														<p class="desc">5MB 이하의 jpg, png, gif파일만 업로드 가능합니다.</p>
+														<label for="IMG_FILE4">파일찾아보기</label> 
+														<input type="file" id="IMG_FILE4" name="IMG_FILE4" class="uploadHidden" onchange="previewImage(this, 'PREVIEW_IMG_DIV', 4)">
+													</div>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div class="table">
+								<table class="upphoto">
+									<caption>교재사진입력 서식</caption>
+									<colgroup>
+										<col style="width: 150px;">
+										<col style="width: *;">
+									</colgroup>
+									<tbody>
+										<tr>
+											<td>
+												<div class="join_photo" id="PREVIEW_IMG_DIV5" name="PREVIEW_IMG_DIV5">
+													<img id="prev_PREVIEW_IMG_DIV5" width="130" height="163" alt=""/>
+												</div>
+											</td>
+											<td>
+												<span class="btnTable"> <a href="#none" onclick="delPreviewImage('PREVIEW_IMG_DIV', 5)" id="checkTA_id">사진삭제</a></span>
+												<div class="dotLine">
+													<div class="attachFile" id="attachImgFile5" name="attachImgFile5" style="width: 458px;">
+														<input type="text" class="upload" id="uploadFileName5" name="uploadFileName5" value="사진 파일을 등록해주세요." disabled="disabled" style="width: 328px;" title="사진업로드">
+														<p class="desc">5MB 이하의 jpg, png, gif파일만 업로드 가능합니다.</p>
+														<label for="IMG_FILE5">파일찾아보기</label> 
+														<input type="file" id="IMG_FILE5" name="IMG_FILE5" class="uploadHidden" onchange="previewImage(this, 'PREVIEW_IMG_DIV', 5)">
+													</div>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div class="btnWrap center">
+								<span class="btnLarge">
+									<button type="submit">확인</button>
+								</span> 
+								<span class="btnLarge light">
+									<a href="javascript:history.back()" style="height: 46px">취소</a>
+								</span>
+							</div>													
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>
+
