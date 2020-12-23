@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="classroomTab06" class="tabCont" id="service6" style="display:none;">
+<script th:inline="javascript">	
+	$(document).ready(function(){ 
+		$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+		
+		searchReview("ALL","", 0);		
+	});
+	
+	var gSearchReviewWord = "";
+	var gSearchReviewOption = "ALL";
+	var gSearchReviewPageIdx= 0;
+		
+	function searchReviewPage(page)
+	{
+		searchReview(gSearchReviewOption, gSearchReviewWord, page);
+	}
+	
+	function searchReview(option, word, page)
+	{	
+		var reqObj = new Object();
+		
+		gSearchReviewWord = word;
+		gSearchReviewOption = option;
+		gSearchReviewPageIdx = page;
+		
+		reqObj.classSeq = /*[[${class.seq}]]*/;
+	    reqObj.word = word;
+	    reqObj.option = option;  
+	    reqObj.pageIdx = page;
+	    
+	    var request = $.ajax({url: /*[[@{/api/listClassReview}]]*/, type : "post", data : reqObj, dataType: "text"});
+	    
+	    request.done(makeListReview);    
+	    request.fail(function(jqXHR, textStatus){alert(textStatus);});
+	}
+	
+	function makeListReview(data)
+	{
+		var responseData = JSON.parse(data);
+	    
+	  	if(!responseData)
+	  	{
+	     	alert("세션이 만료되어 재접속이 필요합니다.");
+	     	return false;
+	  	}      
+	  	
+	  	if(responseData.error != null)
+	  	{
+	     	alert(responseData.error);
+	     	return false;
+	  	}      
+	  	
+	  	clearReview();
+	  	
+	  	var totalReviewCnt = document.getElementById("totalReviewCnt");
+	  	totalReviewCnt.innerHTML = "Total : <span class='red'></span>"+responseData.reviewList.length+"건";
+	  	
+	  	if(responseData.reviewList.length>0)
+	  		document.getElementById("reviewEmpty").style.display="none";
+	  	
+	  	for(i = 0; i < responseData.reviewList.length; i ++)
+		{
+	  		addReview(responseData.reviewList[i]);
+		}
+	  	
+	    if(responseData.pageCnt != 0)
+	    {
+	      addReviewPaginate(responseData);
+	    }
+	    	
+	}
+	
+	function clearReview()
+	{
+	    var reviewListContainer = document.getElementById("reviewListContainer");
+	    var reviewPaginate = document.getElementById("reviewPaginate");	    
+	    document.getElementById("reviewEmpty").style.display="";
+	    
+	    reviewListContainer.innerHTML = "";
+	    reviewPaginate.innerHTML = "";
+	}
+	
+	function addReview(reviewData)
+	{	
+		var reviewListContainer;
+		var row;
+		var checkCell;
+		var reviewCell;
+		var pointCell;
+	
+		reviewListContainer = document.getElementById("reviewListContainer");
+	  	row = reviewListContainer.insertRow();
+	  	
+	  	if(bManager == true)
+	  	{
+			checkCell = row.insertCell(0);
+			pointCell   = row.insertCell(1);
+			reviewCell   = row.insertCell(2);
+			
+			var checkbox = document.createElement("input");
+			checkbox.setAttribute("type", "checkbox");
+			checkbox.setAttribute("id", "reviewCheck");
+			checkbox.setAttribute("name", "reviewCheck");
+			checkbox.value = reviewData.seq;
+			
+			checkCell.appendChild(checkbox);
+	  	}
+	  	else
+		{
+	  		pointCell   = row.insertCell(0);
+	  		reviewCell   = row.insertCell(1);
+		}
+		  	
+	  	var starScore = document.createElement("div");
+	  	starScore.setAttribute("class", "score_star");
+	  	
+	  	var score = document.createElement("span");
+	  	score.setAttribute("class", "score0"+reviewData.point);
+	  	score.innerHTML = "별점" + reviewData.point + "점"
+	  	
+	  	starScore.appendChild(score);	  	
+	  	pointCell.appendChild(starScore);
+	  	
+	  	var reviewContent = document.createElement("div");
+	  	reviewContent.setAttribute("class", "score_reple");
+	  	
+	  	var writer = document.createElement("span");
+	  	writer.setAttribute("style", "font-size:12px;font-weight:bold;color:#999");
+	  	writer.innerHTML = reviewData.writerName + "("+reviewData.writer +")";
+	  	
+	  	var time = document.createElement("span");
+	  	//var date = new Date(reviewData.regDate);
+	  	time.setAttribute("style", "font-size:12px;color:#999");
+	  	time.innerHTML = "  "+convertDateTimeString(reviewData.regDate);
+	  	
+	  	var content = document.createElement("p");
+	  	content.innerHTML = reviewData.review;
+	  		  		  	
+	  	reviewContent.appendChild(content);
+	  	reviewContent.appendChild(writer);
+	  	reviewContent.appendChild(time);
+	  	
+	  	reviewCell.appendChild(reviewContent);
+	  	
+	  	var member = /*[[${member.username}]]*/;
+	  	if(reviewData.writer==member){
+		  	var btnSpan = document.createElement("span");
+		  	
+		  	var delSpan = document.createElement("span");
+		  	delSpan.setAttribute("class", "btnBasic light ");
+		  	delSpan.setAttribute("id", "btnDellReview");
+		  	
+		  	var btnDel = document.createElement("button");
+		  	btnDel.setAttribute("type", "button");
+		  	btnDel.setAttribute("class", "btn_del");
+		  	btnDel.setAttribute("onclick", "delReivew(" + reviewData.seq + ");");
+		  	btnDel.textContent = "삭제";
+		  	
+		  	delSpan.appendChild(btnDel);
+		  	
+		  	var modSpan = document.createElement("span");
+		  	modSpan.setAttribute("class", "btnBasic light");
+		  	modSpan.setAttribute("id", "btnDellReview");
+		  	
+		  	var btnMod = document.createElement("button");
+		  	btnMod.setAttribute("type", "button");
+		  	btnMod.setAttribute("class", "btn_modify");
+		  	btnMod.setAttribute("onclick", "modReivew(this," + reviewData.seq +","+ reviewData.point + ",'"+ reviewData.review + "');");
+		  	btnMod.textContent = "수정";
+		  	
+		  	modSpan.appendChild(btnMod);
+		  	
+		  	btnSpan.appendChild(delSpan);
+		  	btnSpan.appendChild(modSpan);
+		  	
+		  	//reviewCell.appendChild(btnSpan);
+		  	reviewContent.appendChild(btnDel);
+		  	reviewContent.appendChild(btnMod);
+	  	}
+
+	}
+	
+	function addReviewPaginate(pageData)
+	{	
+		var reviewPaginate = document.getElementById("reviewPaginate");
+		var first  = document.createElement("a");
+		
+		first.setAttribute("class", "first");
+	  	first.setAttribute("href", "javascript:{}");
+	  	first.setAttribute("onclick", "searchReviewPage('0');");
+	  	first.innerHTML="맨처음으로";
+	  	reviewPaginate.appendChild(first);
+	  	    
+	  	if(!(pageData.currPageIdx < 6))
+	  	{
+	    	var pre = document.createElement("a");
+	    	pre.setAttribute("class", "pre");
+	    	pre.setAttribute("href", "javascript:{}");
+	    	pre.setAttribute("onclick", "searchReviewPage('"+(pageData.startPageIdx-2)+"');");
+	    	pre.innerHTML="이전페이지";
+	    	reviewPaginate.appendChild(pre);
+	  	}   
+	  
+	  	var pageBox  = document.createElement("div");
+	  	reviewPaginate.appendChild(pageBox);
+	  
+	  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+	  	{
+	    	if(i!=pageData.currPageIdx)
+	    	{
+	      		var p  = document.createElement("a");
+	      		p.setAttribute("href", "javascript:{}");
+	      		p.setAttribute("onclick", "searchReviewPage('"+(i-1)+"');");
+	      		p.innerHTML=""+i;
+	      
+	      		pageBox.appendChild(p);
+	    	}
+	    	else
+	    	{
+	      		var s  = document.createElement("strong");
+	      		s.setAttribute("href", "javascript:{}");
+	      		s.setAttribute("onclick", "searchReviewPage('"+(i-1)+"');");
+	      		s.innerHTML=""+i;
+	      		pageBox.appendChild(s);
+	    	}
+	  	}    
+	   	
+	  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+	  	{
+	    	var next = document.createElement("a");
+	    	next.setAttribute("class", "next");
+	    	next.setAttribute("href", "javascript:{}");
+	    	next.setAttribute("onclick", "searchReviewPage('"+pageData.endPageIdx+"');");
+	    	next.innerHTML="다음페이지";
+	    	reviewPaginate.appendChild(next);
+	  	}  
+	  
+	  	var last   = document.createElement("a");
+	  	last.setAttribute("class", "last");
+	  	last.setAttribute("href", "javascript:{}");
+	  	last.setAttribute("onclick", "searchReviewPage('"+(pageData.pageCnt-1)+"');");
+	  	last.innerHTML="맨마지막";
+	  	reviewPaginate.appendChild(last);
+	}
+	
+	function onClicksearchReview()
+	{
+		var searchReviewValue = document.getElementById("searchReviewValue");
+		var searchReviewType = document.getElementById("searchReviewType");
+		
+		searchReview(searchReviewType.value, searchReviewValue.value,0);
+	}
+	
+	function modReivew(object, seq, point, review){
+		
+		var modExist = document.getElementById("reviewModify");
+		
+		if(modExist != null){
+			alert("수정중인 수강후기가 있습니다.");
+			return;
+		}
+		
+		var div = object.parentNode;		
+		
+		var modDiv = document.createElement("div");
+		modDiv.setAttribute("id", "modDiv");
+		modDiv.setAttribute("name", "modDiv");
+		
+		var spanRev = document.createElement("span");
+		spanRev.setAttribute("class", "starRev2");
+		
+		for(var i =1 ; i<= 5 ; i++){			
+			var starR = document.createElement("span");
+			if(i<=point){
+				starR.setAttribute("class", "starR2 on");	
+			}				
+			else{
+				starR.setAttribute("class", "starR2");
+			}
+			starR.textContent = "별" + i ;
+			spanRev.appendChild(starR);
+		} 
+		
+		var modInput = document.createElement("input");
+		modInput.setAttribute("id", "reviewModify");
+		modInput.setAttribute("type", "text");
+		modInput.setAttribute("maxlength", "100");
+		modInput.setAttribute("style", "width:65%;");
+		modInput.value = review;
+		
+	  	var btnOK = document.createElement("button");
+	  	btnOK.setAttribute("type", "button");
+	  	btnOK.setAttribute("class", "btn_ok");
+	  	btnOK.setAttribute("onclick", "onClickReviewWrite("+seq+",'MOD')");
+	  	btnOK.textContent = "확인";
+		
+	  	var btnCancel = document.createElement("button");
+	  	btnCancel.setAttribute("type", "button");
+	  	btnCancel.setAttribute("class", "btn_cancel");
+	  	btnCancel.setAttribute("onclick", "onClickModCancel(this)");
+	  	btnCancel.textContent = "취소";
+	  	  	
+		modDiv.appendChild(spanRev);
+ 		modDiv.appendChild(modInput);
+		modDiv.appendChild(btnOK);
+		modDiv.appendChild(btnCancel);
+		div.appendChild(modDiv);
+		
+		$('.starRev2 span').click(function(){
+			  $(this).parent().children('span').removeClass('on');
+			  $(this).addClass('on').prevAll('span').addClass('on');
+			  return false;
+			});
+	}
+
+	function onClickReviewWrite(seq,type){
+		var reqObj = new Object();
+				
+		if(type =="NEW"){
+			if(document.getElementById("reviewContent").value==""){
+				alert("후기를 입력하세요.");
+				return;
+			}
+		    reqObj.review = document.getElementById("reviewContent").value;
+		    reqObj.point = document.getElementsByClassName("starR on").length;
+		    
+		    document.getElementById("reviewContent").value = "";
+			$('.starR').addClass('on'); 
+		    
+		}else if (type =="MOD"){
+			if(document.getElementById("reviewModify").value==""){
+				alert("후기를 입력하세요.");
+				return;
+			}
+		    reqObj.review = document.getElementById("reviewModify").value;
+		    reqObj.point = document.getElementsByClassName("starR2 on").length;			
+		}else{
+			alert("입력 형태 오류입니다.");
+			return;
+		}
+		reqObj.seq = seq;
+	    reqObj.word = gSearchReviewWord;
+	    reqObj.option = gSearchReviewOption;
+	    reqObj.pageIdx = gSearchReviewPageIdx;
+	    reqObj.classSeq = /*[[${class.seq}]]*/;
+	    
+	    var request = $.ajax({ url : /*[[@{/api/submitClassReview}]]*/, type : "post", data : reqObj, dataType: "text"});
+	    
+	    request.done(makeListReview);
+	    
+	    request.fail(function(jqXHR, textStatus){ alert(textStatus); });
+	}
+	
+	function onClickModCancel(object){
+		 var modDiv= document.getElementById("modDiv");			
+		object.parentNode.parentNode.removeChild(modDiv);		
+	}
+	
+	function delReivew(seq){
+		if(confirm("해당 수강후기를 삭제 하시겠습니까?")){		
+			var reqObj = new Object();
+			
+		    reqObj.seq = seq;
+		    reqObj.word = gSearchReviewWord;
+		    reqObj.option = gSearchReviewOption;
+		    reqObj.pageIdx = gSearchReviewPageIdx;
+		    reqObj.classSeq = /*[[${class.seq}]]*/;
+		    
+		    var request = $.ajax({ url : /*[[@{/api/deleteClassReview}]]*/, type : "post", data : reqObj, dataType: "text"});
+		    
+		    request.done(makeListReview);
+		    
+		    request.fail(function(jqXHR, textStatus){ alert(textStatus); });
+		}			
+	}
+	function onClickListReviewDelete()
+	{	
+		var checkRow = "";
+		
+		$( "input[name='reviewCheck']:checked" ).each (
+			function ()
+			{
+				checkRow = checkRow + $(this).val()+":" ;
+			}
+		);
+		
+		checkRow = checkRow.substring(0,checkRow.lastIndexOf( ":"));
+		
+		if(checkRow == '')
+		{
+		  alert("삭제할 수강후기를 선택하세요.");
+		  return false;
+		}
+		
+		if(confirm("삭제된 수강후기는 복구되지 않습니다.\n선택한 수강후기를 삭제 하시겠습니까?"))
+		{
+			deleteListReview(checkRow);
+		}	
+	}
+	
+	function deleteListReview(checkRow)
+	{		
+		var reqObj = new Object();
+		
+	    reqObj.listSeq = checkRow;
+	    reqObj.word = gSearchReviewWord;
+	    reqObj.option = gSearchReviewOption;
+	    reqObj.pageIdx = gSearchReviewPageIdx;
+	    reqObj.classSeq = /*[[${class.seq}]]*/;
+	    
+	    var request = $.ajax({ url : /*[[@{/api/deleteListClassReview}]]*/, type : "post", data : reqObj, dataType: "text"});
+	    
+	    request.done(makeListReview);
+	    
+	    request.fail(function(jqXHR, textStatus){ alert(textStatus); });			
+	}
+	
+	function onClickAllReviewDelete()
+	{
+		var reviewList = $('#reviewListContainer tr').length;
+		
+		if(reviewList <= 0){
+			alert("삭제할 정보가 없습니다.");
+			return;
+		}
+			
+		if(confirm("수강후기를 '전체삭제' 하시겠습니까?")){			
+			if(confirm("삭제된 수강후기는 복구되지 않습니다.\n '전체삭제' 하시겠습니까?")){
+				var reqObj = new Object();
+				
+			    reqObj.word = gSearchReviewWord;
+			    reqObj.option = gSearchReviewOption;
+			    reqObj.pageIdx = gSearchReviewPageIdx;
+			    reqObj.classSeq = /*[[${class.seq}]]*/;
+			    
+			    var request = $.ajax({ url : /*[[@{/api/deleteClassReviewAll}]]*/, type : "post", data : reqObj, dataType: "text"});
+			    
+			    request.done(makeListReview);
+			    
+			    request.fail(function(jqXHR, textStatus){ alert(textStatus); });							
+			}
+		}
+	}
+</script>	
+	<div id="reviewListBox">
+		<form>
+			<input type="hidden" id="seq" name="seq" value = "-1">			
+		</form>
+			<div class="tableTop">
+				<p id="totalReviewCnt" class="count"></p>
+				<div class="searchTable"> 
+					<span class="formElement">
+						<select id="searchReviewType" style="width:105px;">
+							<option value="ALL">전체</option>
+							<option value="WRITER">작성자</option>
+							<option value="CONTENT">내용</option>							
+						</select>
+					</span>
+					<div class="search">
+						<input type="text" id="searchReviewValue">
+						<button type="submit" id="searchReviewAction" name="searchReviewAction" onclick="onClicksearchReview();">검색하기</button>
+					</div>
+				</div>
+			</div>
+			<div class="tbList">
+				<table border="1" cellspacing="0" summary="질문과 답변 리스트">
+					<caption>질문과 답변 리스트</caption>
+					<colgroup>
+						<col th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}" width="40">
+						<col width="">
+						<col width="250px">
+					</colgroup>
+					<tbody id="reviewListContainer"></tbody>
+				</table>
+			</div>
+			<div id = "reviewEmpty" style="text-align:center;">정보가 없습니다.</div>
+			<div th:if="${member != null && member.level == 'LEVEL_MEMBER'}">
+ 				<span class="starRev">
+					<span class="starR on">별1</span>
+					<span class="starR on">별2</span>
+					<span class="starR on">별3</span>
+					<span class="starR on">별4</span>
+					<span class="starR on">별5</span>
+				</span>                  
+				<span> 
+					<input type="text" id="reviewContent" name="reviewContent" placeholder="후기를 입력하세요." style="width:65%;" maxlength="100">													
+				</span>		
+				<span class="btnWrap">			
+					<span class="btnBasic blue"> <a type="button" id="form02" href="javascript:{}" onclick="onClickReviewWrite(-1,'NEW');">후기올리기</a></span>
+				</span>
+			</div>
+			<div th:if="${member != null && member.level == 'LEVEL_TEACHER'}">
+				<div class="btnWrap">			
+					<span class="btnBasic light"> <button type="button" id="btnAllDel" onclick="onClickAllReviewDelete();">전체삭제</button></span>
+					<span class="btnBasic"> <button type="button" id="btnSelectDel" onclick="onClickListReviewDelete();">선택삭제</button></span>
+				</div>			
+			</div>			
+			<div id="reviewPaginate" class="paginate"></div>
+		</div>
+	</div>			
+</body>
+</html>

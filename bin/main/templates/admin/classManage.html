@@ -1,0 +1,1333 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta name="viewport" content="width=1080" />
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}" />
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}" />
+<link rel="stylesheet" type="text/css" th:href="@{/css/jquery-ui.css}" />
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery-ui.min.js}"></script>
+
+<!--[if lt IE 9]>
+		<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+		<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+	<![endif]-->
+
+<style>
+.ui-datepicker{ font-size: 14px; width: 200px; }
+.ui-datepicker select.ui-datepicker-month{ width:40%; font-size: 12px; }
+.ui-datepicker select.ui-datepicker-year{ width:50%; font-size: 12px; }
+</style>
+	
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+var lessonList = false;
+
+$(document).ready( function() {	
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	
+	var seq = /*[[${classSeq}]]*/;
+ 	if (seq!=null){
+ 		showClassView(seq);
+ 		showLessonView(seq);
+	}else{
+		AddLessonInfo(null,0);
+	}
+ 	
+ 	initDateTimePicker();
+});
+
+jQuery.browser = {};
+(function () {
+    jQuery.browser.msie = false;
+    jQuery.browser.version = 0;
+    if (navigator.userAgent.match(/MSIE ([0-9]+)\./)) {
+        jQuery.browser.msie = true;
+        jQuery.browser.version = RegExp.$1;
+    }
+})();
+
+function initDateTimePicker()
+{
+    $.datepicker.setDefaults({
+    	dateFormat: 'yy-mm-dd'    	
+    	,currentText: '오늘 날짜'
+    	,closeText: "닫기"
+    	,showButtonPanel: true
+    	,prevText: "이전달"
+    	,nextText: "다음달"
+    	,currentText: "오늘"
+    	,monthNames: [ "1월","2월","3월","4월","5월","6월",	"7월","8월","9월","10월","11월","12월" ]
+    	,monthNamesShort: [ "1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월" ]
+    	,dayNames: [ "일요일","월요일","화요일","수요일","목요일","금요일","토요일" ]
+    	,dayNamesShort: [ "일","월","화","수","목","금","토" ]
+    	,dayNamesMin: [ "일","월","화","수","목","금","토" ]
+    	,weekHeader: "주"
+    	,firstDay: 0
+    	,isRTL: false
+    	,showMonthAfterYear: true
+    	,yearSuffix: "년" 
+        ,buttonImage: "http://jqueryui.com/resources/demos/datepicker/images/calendar.gif" //버튼 이미지 경로
+    	,showOn: "both"      
+    });
+    $( "#sRegDate" ).datepicker();
+    $( "#eRegDate" ).datepicker();
+    $( "#sStudyDate" ).datepicker();
+    $( "#eStudyDate" ).datepicker();
+}
+
+function showClassView(classSeq)
+{
+	var reqObj = new Object();
+	var pwd = null;
+
+    reqObj.classSeq = classSeq;
+    
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/getClassInfo}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(function (data)
+    {      	
+    	var value="";
+    	var responseData = JSON.parse(data);
+    	
+      	if(!responseData)
+      	{
+         	alert("세션이 만료되어 재접속이 필요합니다.");
+         	return false;
+      	}    
+      	
+    	if(responseData.error != null)
+    	{
+    		alert(responseData.error);
+    		return false;
+    	}
+    	
+    	var seq = document.getElementById("seq");
+    	var offlineStudyInfoSeq = document.getElementById("offlineStudyInfoSeq");
+		var courseCode = document.getElementById("courseCode");
+		var courseName = document.getElementById("courseName");
+		var cName = document.getElementById("cName");
+		var courseSeq = document.getElementById("courseSeq");
+		var teacherName = document.getElementById("teacherName");
+		var teacherUsername = document.getElementById("teacherUsername");
+		var teacherRealname = document.getElementById("teacherRealname");
+		var sRegDate = document.getElementById("sRegDate");
+		var eRegDate = document.getElementById("eRegDate");
+		var sStudyDate = document.getElementById("sStudyDate");
+		var eStudyDate = document.getElementById("eStudyDate");
+		
+		var code = document.getElementById("code");
+		var name = document.getElementById("name");
+		var capa = document.getElementById("capa");
+		var cost = document.getElementById("cost");
+		var time = document.getElementById("time");
+		var no = document.getElementById("no");
+		
+		var rootPath = /*[[@{/}]]*/
+		
+		seq.value = responseData.seq;
+		offlineStudyInfoSeq.value = responseData.offlineStudyInfoSeq;
+		courseCode.value = responseData.courseCode;
+		courseName.value = responseData.courseName;
+		cName.value = responseData.courseName;
+		courseSeq.value = responseData.courseSeq;		
+		teacherName.value = responseData.teacherRealname + "("+ responseData.teacherUsername + ")";
+		teacherUsername.value = responseData.teacherUsername;
+		teacherRealname.value = responseData.teacherRealname;
+		
+		if(responseData.startRegDate=='0001-01-01' && responseData.endRegDate=="9999-12-31"){
+			$('input[name="radioPeriod"]').val([false]);
+			sRegDate.value = "";
+			eRegDate.value = "";			
+		}else{
+			$('input[name="radioPeriod"]').val([true]);
+			sRegDate.value = responseData.startRegDate; 
+			eRegDate.value = responseData.endRegDate;			
+		}
+		sStudyDate.value = responseData.startStudyDate;
+		eStudyDate.value = responseData.endStudyDate;
+		
+		code.value = responseData.code;
+		name.value = responseData.name
+		
+		if(responseData.capa =='0'){
+			$('input[name="radioCapa"]').val([false]);
+			capa.value = 0;
+		}else{
+			$('input[name="radioCapa"]').val([true]);
+			capa.value = responseData.capa;	
+		}		
+		if(responseData.cost =='0'){
+			$('input[name="radioCost"]').val([false]);
+			cost.value = 0;
+		}else{
+			$('input[name="radioCost"]').val([true]);
+			cost.value = responseData.cost;
+		}		
+		time.value = responseData.time;
+		no.value = responseData.no;
+			      	
+      	viewData = responseData;
+    });
+    
+    request.fail(function(jqXHR, textStatus){     	
+        alert(textStatus);
+    });
+}
+
+function showLessonView(classSeq)
+{
+	var reqObj = new Object();
+	var pwd = null;
+
+    reqObj.classSeq = classSeq;
+    
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/getLessonInfo}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(makeLessonList);
+    
+    request.fail(function(jqXHR, textStatus){     	
+        alert(textStatus);
+    });
+}
+
+function makeLessonList(data)
+{      	
+	var responseData = JSON.parse(data);
+	
+  	if(!responseData)
+  	{
+     	alert("세션이 만료되어 재접속이 필요합니다.");
+     	return false;
+  	}    
+  	
+	if(responseData.error != null)
+	{
+		alert(responseData.error);
+		return false;
+	}
+	
+    var lessonListContainer = document.getElementById("lessonListContainer");   
+    lessonListContainer.innerHTML = "";
+	
+	if(responseData.length > 0){
+		lessonList = true;
+		for (i = 0; i < responseData.length; i++){
+			AddLessonInfo(responseData[i],i);    			
+		}
+	}else{
+		lessonList = false;
+		AddLessonInfo(null,0);
+	}	
+}
+
+function regSubmit(){
+	
+ 	if(document.getElementById("courseSeq").value == ""){
+		alert("과목을 설정하세요.");
+   		return false;
+	}
+ 	
+ 	if(document.getElementById("cName").value == ""){
+		alert("과목을 설정하세요.");
+   		return false;
+	}
+ 	
+ 	document.getElementById("courseName").value = document.getElementById("cName").value;
+	
+ 	if(document.getElementById("teacherUsername").value == ""){
+		alert("담당교수를 설정하세요.");
+   		return false;
+	}
+	
+	if(document.getElementById("code").value == ""){
+		alert("강좌코드를 입력하세요.");
+   		return false;
+	}
+	
+	if(document.getElementById("name").value == ""){
+		alert("강좌명을 입력하세요.");
+   		return false;
+	}
+		
+	if ($('input[name="radioPeriod"]:checked').val() == "true"){
+		if(document.getElementById("sRegDate").value == "" || document.getElementById("eRegDate").value == ""){
+			alert("신청기간을 설정하세요.");
+	   		return false;
+		}
+		
+		document.getElementById("startRegDate").value = document.getElementById("sRegDate").value;
+		document.getElementById("endRegDate").value = document.getElementById("eRegDate").value;	
+	}else{
+		document.getElementById("startRegDate").value ="0001-01-01";
+		document.getElementById("endRegDate").value ="9999-12-31";
+	}
+	
+		
+	if(document.getElementById("sStudyDate").value == "" || document.getElementById("eStudyDate").value == ""){
+		alert("교육기간을 설정하세요.");
+   		return false;
+	}
+		
+	document.getElementById("startStudyDate").value = document.getElementById("sStudyDate").value;
+	document.getElementById("endStudyDate").value = document.getElementById("eStudyDate").value;
+	
+	if(document.getElementById("time").value == ""){
+		alert("교육시간을 설정하세요.");
+   		return false;
+	}
+	
+	if ($('input[name="radioCost"]:checked').val() == "true"){
+		if(document.getElementById("cost").value == 0){
+			alert("교육비를 설정하세요.");
+	   		return false;
+		}
+	}
+	
+	if ($('input[name="radioCapa"]:checked').val() == "true"){
+		if(document.getElementById("capa").value == 0){
+			alert("정원을 설정하세요.");
+	   		return false;
+		}
+	}
+	
+	if(document.getElementById("no").value == ""){
+		alert("과목차시를 입력하세요.");
+   		return false;
+	}
+	
+	if(checkLesson()==false){
+		alert("강의를 등록해 주세요.");
+		return false;
+	}
+	
+	var check ="OK";
+	
+	$( "input[name='lessonNum']" ).each (
+			function(){
+				if( $(this).val()== null || $(this).val() =="" ){
+					alert("강의차수를 입력해주세요.");
+					check = "NUM";
+					return false;
+				}
+			}
+		);
+	
+	$( "textarea[name='lessonContent']" ).each (
+			function(){
+				if(check=="NUM"){
+					return;
+				}
+				if( $(this).val()== null || $(this).val() =="" ){
+					alert("강의 내용을 입력해주세요.");
+					check = "CONTENTS";
+					return false;
+				}
+			}
+		);			
+
+	if(check != "OK"){			
+		return false;
+	}
+	
+	var msg = "해당강좌를 등록 하시겠습니까?";
+	if(document.getElementById("seq").value >0 ){
+		msg = "해당강좌를 수정 하시겠습니까?";
+	}		
+	
+	if(confirm(msg))
+	{
+		AddLesson();
+		return true;
+	}else{
+		
+		return false;
+	}
+}
+
+function checkLesson(){
+	var lessonNum = 0;
+	var lessonContent = 0;
+	var lessonSeq = 0;
+	$( "input[name='lessonNum']" ).each (
+			function(index){
+				lessonNum +=1;
+				}
+		);
+	$( "textarea[name='lessonContent']" ).each (
+			function(index){
+				lessonContent +=1;
+				}
+		);
+	$( "input[name='lessonSeq']" ).each (
+			function(index){
+				lessonSeq +=1;
+				}
+		);
+	if(lessonNum >1 && lessonContent >1 && lessonSeq >1) {
+		if((lessonNum == lessonContent) && (lessonContent == lessonSeq)){
+			return true;	
+		}else{
+			return false;
+		}
+		
+	}
+	else{
+		if(lessonNum == 1 && lessonContent ==1 && lessonSeq ==1) {
+			var check ="OK";
+			$( "input[name='lessonNum']" ).each (
+					function(){
+						if( $(this).val()== null || $(this).val() =="" ){
+							alert("강의차수를 입력해주세요.");
+							check = "NUM";
+							return;
+						}
+					}
+				);
+			
+			$( "textarea[name='lessonContent']" ).each (
+					function(){
+						if(check=="NUM"){
+							return;
+						}
+						if( $(this).val()== null || $(this).val() =="" ){
+							alert("강의 내용을 입력해주세요.");
+							check = "CONTENTS";
+							return;
+						}
+					}
+				);
+			if(check=="OK"){
+				return true;
+			}else{
+				return false;
+			}
+		}else{
+			return false;	
+		}
+		
+	}
+}
+
+function AddLesson(){
+	$( "input[name='lessonNum']" ).each (
+			function(index){
+				$(this).attr("name", "lessonList[" + index + "].lessonOrder");
+				}
+		);
+	$( "textarea[name='lessonContent']" ).each (
+			function(index){
+				$(this).attr("name", "lessonList[" + index + "].content");
+				}
+		);
+	$( "input[name='lessonSeq']" ).each (
+			function(index){
+				$(this).attr("name", "lessonList[" + index + "].seq");
+				}
+		);			
+}
+
+function onClickAddCourse()
+{
+    // Get the modal
+    var modal = document.getElementById('selectCourseDlg');                                    
+
+    // When the user clicks on the button, open the modal 
+    modal.style.display = "block";
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+	var searchCourseValue = document.getElementById("searchCourseValue");
+	var searchCourseType = document.getElementById("searchCourseType");
+	searchCourseValue.value="";
+	searchCourseType.value="NAME";
+ 	courseSearch(searchCourseType.value,searchCourseValue.value, 0);
+}
+
+var gCourseSearchWord = "";
+var gCourseSearchOption = "NAME";
+var gCourseSearchPageIdx= 0;
+
+function courseSearchPage(page)
+{
+	courseSearch(gCourseSearchOption, gCourseSearchWord, page);
+}
+
+function courseSearch(option, word, page)
+{	
+	var reqObj = new Object();
+	
+	gCourseSearchWord = word;
+	gCourseSearchOption = option;
+	gCourseSearchPageIdx = page;
+	
+    reqObj.word = word;
+    reqObj.option = option;
+    reqObj.pageIdx = page;
+        
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/listCourseInfo}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(makeCourseList);
+    
+    request.fail(function(jqXHR, textStatus){ 
+        alert(textStatus);
+    });
+}
+
+function makeCourseList(data)
+{
+	var responseData = JSON.parse(data);
+    
+  	if(!responseData)
+  	{
+     	alert("세션이 만료되어 재접속이 필요합니다.");
+     	return false;
+  	}      
+  	
+  	if(responseData.error != null)
+  	{
+     	alert(responseData.error);
+     	return false;
+  	}
+  	
+  	clearCourseInfo();
+	
+  	var totalCnt = document.getElementById("totalCourseCnt");
+  	totalCnt.innerHTML = "Total : <span class='red'></span>"+responseData.courseList.length+"건";
+  	
+  	if(responseData.courseList.length>0)
+  		document.getElementById("courseEmpty").style.display="none";
+  	
+  	for(i = 0; i < responseData.courseList.length; i ++)
+	{
+  		addCourseInfo(responseData.courseList[i]);
+	}
+  	
+    if(responseData.pageCnt != 0)
+    {
+    	addCoursePaginate(responseData);
+    }
+}
+
+function clearCourseInfo()
+{
+    var courseInfoListContainer = document.getElementById("courseInfoListContainer");
+    var paginate = document.getElementById("coursepaginate");
+    document.getElementById("courseEmpty").style.display="";
+    
+    courseInfoListContainer.innerHTML = "";
+    paginate.innerHTML = "";
+}
+
+function addCourseInfo(courseInfoData)
+{	
+	var courseInfoListContainer;
+	var row;
+	var courseCodeCell;
+	var courseNameCell;
+
+	var checkbox = document.createElement("input");
+	var ahref = document.createElement("a");
+	
+	courseInfoListContainer = document.getElementById("courseInfoListContainer");
+  	row = courseInfoListContainer.insertRow();
+  	
+	courseCodeCell   = row.insertCell(0);
+	courseNameCell   = row.insertCell(1);
+ 
+	courseCodeCell.setAttribute("style", "text-align:center;");
+	courseCodeCell.textContent = courseInfoData.courseCode;
+	
+	ahref.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 350px;white-space: nowrap; font-weight:bold;cursor:pointer");
+	ahref.innerHTML = courseInfoData.courseName;
+	courseNameCell.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 350px;white-space: nowrap;");
+	courseNameCell.appendChild(ahref);
+	courseNameCell.innerHTML = courseNameCell.innerHTML.replace(/\n\r?/g, '<br />');
+
+	courseNameCell.onclick=function()
+	{
+		selectCourse(courseInfoData.courseCode, courseInfoData.courseName, courseInfoData.seq);
+	};
+}
+function selectCourse(coursecode, coursename, courseseq){
+	
+	var courseCode = document.getElementById("courseCode");
+	courseCode.value = coursecode;	
+	var courseName = document.getElementById("courseName");
+	courseName.value = coursename;
+	var courseSeq = document.getElementById("courseSeq");
+	courseSeq.value = courseseq;
+	
+	var cName = document.getElementById("cName");
+	cName.value = coursename;
+	
+    // Get the modal
+    var modal = document.getElementById('selectCourseDlg');                                    
+
+    modal.style.display = "none";   
+}
+
+function addCoursePaginate(pageData)
+{	
+	var paginate = document.getElementById("coursepaginate");
+	var first  = document.createElement("a");
+	
+	first.setAttribute("class", "first");
+  	first.setAttribute("href", "javascript:{}");
+  	first.setAttribute("onclick", "courseSearchPage('0');");
+  	first.innerHTML="맨처음으로";
+  	paginate.appendChild(first);
+  	    
+  	if(!(pageData.currPageIdx < 6))
+  	{
+    	var pre = document.createElement("a");
+    	pre.setAttribute("class", "pre");
+    	pre.setAttribute("href", "javascript:{}");
+    	pre.setAttribute("onclick", "courseSearchPage('"+(pageData.startPageIdx-2)+"');");
+    	pre.innerHTML="이전페이지";
+    	paginate.appendChild(pre);
+  	}   
+  
+  	var pageBox  = document.createElement("div");
+  	paginate.appendChild(pageBox);
+  
+  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+  	{
+    	if(i!=pageData.currPageIdx)
+    	{
+      		var p  = document.createElement("a");
+      		p.setAttribute("href", "javascript:{}");
+      		p.setAttribute("onclick", "courseSearchPage('"+(i-1)+"');");
+      		p.innerHTML=""+i;
+      
+      		pageBox.appendChild(p);
+    	}
+    	else
+    	{
+      		var s  = document.createElement("strong");
+      		s.setAttribute("href", "javascript:{}");
+      		s.setAttribute("onclick", "courseSearchPage('"+(i-1)+"');");
+      		s.innerHTML=""+i;
+      		pageBox.appendChild(s);
+    	}
+  	}    
+   	
+  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+  	{
+    	var next = document.createElement("a");
+    	next.setAttribute("class", "next");
+    	next.setAttribute("href", "javascript:{}");
+    	next.setAttribute("onclick", "courseSearchPage('"+pageData.endPageIdx+"');");
+    	next.innerHTML="다음페이지";
+    	paginate.appendChild(next);
+  	}  
+  
+  	var last   = document.createElement("a");
+  	last.setAttribute("class", "last");
+  	last.setAttribute("href", "javascript:{}");
+  	last.setAttribute("onclick", "courseSearchPage('"+(pageData.pageCnt-1)+"');");
+  	last.innerHTML="맨마지막";
+  	paginate.appendChild(last);
+}
+
+function onClickCourseSearch()
+{
+	var searchCourseValue = document.getElementById("searchCourseValue");
+	var searchCouseType = document.getElementById("searchCourseType");
+	
+	courseSearch(searchCouseType.value, searchCourseValue.value,0);
+}
+
+function onClickAddTeacher()
+{
+    // Get the modal
+    var modal = document.getElementById('selectTeacherDlg');                                    
+
+    // When the user clicks on the button, open the modal 
+    modal.style.display = "block";
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+	var searchTeacherValue = document.getElementById("searchTeacherValue");
+	var searchTeacherType = document.getElementById("searchTeacherType");
+	searchTeacherValue.value="";
+	searchTeacherType.value="NAME";
+ 	teacherSearch("ALL","", 0);
+}
+
+var gTeacherSearchWord = "";
+var gTeacherSearchOption = "ALL";
+var gTeacherSearchPageIdx= 0;
+
+function teacherSearchPage(page)
+{
+	teacherSearch(gTeacherSearchOption, gTeacherSearchWord, page);
+}
+
+function teacherSearch(option, word, page)
+{	
+	var reqObj = new Object();
+	
+	gTeacherSearchWord = word;
+	gTeacherSearchOption = option;
+	gTeacherSearchPageIdx = page;
+	
+    reqObj.word = word;
+    reqObj.option = option;
+    reqObj.pageIdx = page;
+        
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/listTeacherInfo}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(makeTeacherList);
+    
+    request.fail(function(jqXHR, textStatus){ 
+        alert(textStatus);
+    });
+}
+
+function makeTeacherList(data)
+{
+	var responseData = JSON.parse(data);
+    
+  	if(!responseData)
+  	{
+     	alert("세션이 만료되어 재접속이 필요합니다.");
+     	return false;
+  	}      
+  	
+  	if(responseData.error != null)
+  	{
+     	alert(responseData.error);
+     	return false;
+  	}
+  	
+  	clearTeacherInfo();  	
+	
+  	var totalCnt = document.getElementById("totalTeacherCnt");
+  	totalCnt.innerHTML = "Total : <span class='red'></span>"+responseData.memberList.length+"건";
+  	
+  	if(responseData.memberList.length>0)
+  		document.getElementById("teacherEmpty").style.display="none";
+  	
+  	for(i = 0; i < responseData.memberList.length; i ++)
+	{
+  		addTeacherInfo(responseData.memberList[i]);
+	}
+  	
+    if(responseData.pageCnt != 0)
+    {
+      addTeacherPaginate(responseData);
+    }
+}
+
+function clearTeacherInfo()
+{
+    var teacherInfoListContainer = document.getElementById("teacherInfoListContainer");
+    var paginate = document.getElementById("teacherpaginate");	
+    document.getElementById("teacherEmpty").style.display="";
+    
+    teacherInfoListContainer.innerHTML = "";
+    paginate.innerHTML = "";
+}
+
+function addTeacherInfo(teacherInfoData)
+{	
+	var teacherInfoListContainer;
+	var row;
+	var usernameCell;
+	var realNameCell;
+	var regDateCell;
+	
+	var ahref = document.createElement("a");
+	
+	teacherInfoListContainer = document.getElementById("teacherInfoListContainer");
+  	row = teacherInfoListContainer.insertRow();
+  	
+	realNameCell   = row.insertCell(0);
+	usernameCell   = row.insertCell(1);
+	phoneNumCell   = row.insertCell(2);		  
+
+	realNameCell.setAttribute("style", "text-align:center; overflow: hidden;text-overflow:ellipsis;max-width: 500px;white-space: nowrap;");
+	realNameCell.textContent = teacherInfoData.realname;
+	realNameCell.innerHTML = realNameCell.innerHTML.replace(/\n\r?/g, '<br />');
+	
+
+	ahref.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 500px;white-space: nowrap; font-weight:bold;cursor:pointer");
+	ahref.innerHTML = teacherInfoData.username;
+	usernameCell.setAttribute("style", "text-align:center; overflow: hidden;text-overflow:ellipsis;max-width: 500px;white-space: nowrap;");
+	usernameCell.appendChild(ahref);
+	usernameCell.innerHTML = usernameCell.innerHTML.replace(/\n\r?/g, '<br />');
+  	
+	phoneNumCell.setAttribute("style", "text-align:center;");
+	phoneNumCell.textContent = teacherInfoData.mobile;
+
+  	usernameCell.onclick=function()
+	{
+  		selectTeacher(teacherInfoData.realname,teacherInfoData.username);
+	};
+}
+
+function selectTeacher(name, id)
+{
+	var teacherUsername = document.getElementById("teacherUsername");
+	teacherUsername.value = id;
+	var teacherRealname = document.getElementById("teacherRealname");
+	teacherRealname.value = name;
+
+	var teacherName = document.getElementById("teacherName");
+	teacherName.value = name +"("+id+")";
+	
+    // Get the modal
+    var modal = document.getElementById('selectTeacherDlg');                                    
+
+    modal.style.display = "none";    
+}
+function addTeacherPaginate(pageData)
+{	
+	var paginate = document.getElementById("teacherpaginate");
+	var first  = document.createElement("a");
+	
+	first.setAttribute("class", "first");
+  	first.setAttribute("href", "javascript:{}");
+  	first.setAttribute("onclick", "searchPage('0');");
+  	first.innerHTML="맨처음으로";
+  	paginate.appendChild(first);
+  	    
+  	if(!(pageData.currPageIdx < 6))
+  	{
+    	var pre = document.createElement("a");
+    	pre.setAttribute("class", "pre");
+    	pre.setAttribute("href", "javascript:{}");
+    	pre.setAttribute("onclick", "teacherSearchPage('"+(pageData.startPageIdx-2)+"');");
+    	pre.innerHTML="이전페이지";
+    	paginate.appendChild(pre);
+  	}   
+  
+  	var pageBox  = document.createElement("div");
+  	paginate.appendChild(pageBox);
+  
+  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+  	{
+    	if(i!=pageData.currPageIdx)
+    	{
+      		var p  = document.createElement("a");
+      		p.setAttribute("href", "javascript:{}");
+      		p.setAttribute("onclick", "teacherSearchPage('"+(i-1)+"');");
+      		p.innerHTML=""+i;
+      
+      		pageBox.appendChild(p);
+    	}
+    	else
+    	{
+      		var s  = document.createElement("strong");
+      		s.setAttribute("href", "javascript:{}");
+      		s.setAttribute("onclick", "teacherSearchPage('"+(i-1)+"');");
+      		s.innerHTML=""+i;
+      		pageBox.appendChild(s);
+    	}
+  	}    
+   	
+  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+  	{
+    	var next = document.createElement("a");
+    	next.setAttribute("class", "next");
+    	next.setAttribute("href", "javascript:{}");
+    	next.setAttribute("onclick", "teacherSearchPage('"+pageData.endPageIdx+"');");
+    	next.innerHTML="다음페이지";
+    	paginate.appendChild(next);
+  	}  
+  
+  	var last   = document.createElement("a");
+  	last.setAttribute("class", "last");
+  	last.setAttribute("href", "javascript:{}");
+  	last.setAttribute("onclick", "teacherSearchPage('"+(pageData.pageCnt-1)+"');");
+  	last.innerHTML="맨마지막";
+  	paginate.appendChild(last);
+}
+
+function onClickTeacherSearch()
+{
+	var searchTeacherValue = document.getElementById("searchTeacherValue");
+	var searchTeacherType = document.getElementById("searchTeacherType");
+	
+	teacherSearch(searchTeacherType.value, searchTeacherValue.value,0);
+}
+
+function onClickAddLesson(){
+	
+	var check ="OK";
+	
+	$( "input[name='lessonNum']" ).each (
+			function(){
+				if( $(this).val()== null || $(this).val() =="" ){
+					alert("강의차수를 입력해주세요.");
+					check = "NUM";
+					return;
+				}
+			}
+		);
+	
+	$( "textarea[name='lessonContent']" ).each (
+			function(){
+				if(check=="NUM"){
+					return;
+				}
+				if( $(this).val()== null || $(this).val() =="" ){
+					alert("강의 내용을 입력해주세요.");
+					check = "CONTENTS";
+					return;
+				}
+			}
+		);			
+
+	if(check == "OK"){
+		AddLessonInfo(null,0);
+	}
+}
+
+function AddLessonInfo(lessonInfoData, id)
+{	
+	var lessonListContainer;
+	var row;
+	var checkCell;
+	var lessonNumCell;
+	var lessonContentCell;
+	var lessonSeqCell;
+
+	var checkbox = document.createElement("input");
+	var num = document.createElement("input");
+	var content = document.createElement("textarea");
+	var seq = document.createElement("input");
+	
+	lessonListContainer = document.getElementById("lessonListContainer");
+  	row = lessonListContainer.insertRow();
+  	
+	checkCell = row.insertCell(0);
+	lessonNumCell = row.insertCell(1);
+	lessonContentCell = row.insertCell(2);
+	
+	checkbox.setAttribute("type", "checkbox");
+	checkbox.setAttribute("id", "lessonCheck"+id);
+	checkbox.setAttribute("name", "lessonCheck");
+	checkbox.setAttribute("style", "max-width: 40px;white-space: nowrap;");
+	
+	num.setAttribute("type", "number");
+	num.setAttribute("id", "lessonNum"+id);
+	num.setAttribute("name", "lessonNum");
+	num.setAttribute("style", "overflow: hidden;max-width: 60px;white-space: nowrap;");
+
+	content.setAttribute("id", "lessonContent"+id);
+	content.setAttribute("name", "lessonContent");
+	content.setAttribute("row", "5");
+	content.setAttribute("cols", "50");
+	content.setAttribute("maxlength","250");
+	content.setAttribute("placeholder","강의내용을 입력하세요.");
+	content.setAttribute("style", "overflow: hidden;max-width: 600px;white-space: nowrap;");
+	
+	seq.setAttribute("type", "hidden");
+	seq.setAttribute("id", "lessonSeq"+id);
+	seq.setAttribute("name", "lessonSeq");
+	
+	if(lessonInfoData !=null){
+		checkbox.value = lessonInfoData.seq;
+		seq.value = lessonInfoData.seq;
+	}else{
+		checkbox.value = -1;
+		seq.value = -1;
+	}
+	
+	checkCell.appendChild(checkbox);
+	lessonNumCell.appendChild(num);
+	lessonContentCell.appendChild(content);
+	lessonContentCell.appendChild(seq);
+  
+	if(lessonInfoData !=null){
+		$("#lessonNum"+id).val(lessonInfoData.lessonOrder);
+		$("#lessonContent"+id).val(lessonInfoData.content);
+	}
+}
+
+function onClickAllCheck()
+{
+    if( $("#lessonAllCheck").is(':checked') )
+    {
+        $("input[name=lessonCheck]").prop("checked", true);
+    }
+    else
+    {
+       $("input[name=lessonCheck]").prop("checked", false);
+    }
+}
+
+
+function onDeleteLesson()
+{
+	var checkRow = "";
+	
+	$( "input[name='lessonCheck']:checked" ).each (
+		function ()
+		{
+			checkRow = checkRow + $(this).val()+":" ;
+		}
+	);
+	
+	checkRow = checkRow.substring(0,checkRow.lastIndexOf( ":"));
+	
+	if(checkRow == '')
+	{
+	  alert("삭제할 수업을 선택하세요.");
+	  return false;
+	}
+	
+	if(confirm("선택한 수업을 삭제 하시겠습니까?"))
+	{		
+		if(lessonList==false){
+			var lessonListContainer = document.getElementById("lessonListContainer");
+						
+			$( "input[name='lessonCheck']:checked" ).each (
+				function(){
+					var tr = $(this).parent().parent();
+ 					tr.remove();
+					if(lessonListContainer.rows.length<1){
+						AddLessonInfo(null,0);
+					}
+				}
+			);
+		}else{
+			DeleteLessonList(checkRow);	
+		}		
+	}
+}
+
+function DeleteLessonList(checkRow)
+{
+	var reqObj = new Object();
+    reqObj.listLesson = checkRow;
+    reqObj.classSeq = document.getElementById("seq").value;
+    
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/deleteLessonList}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(makeLessonList);
+    
+    request.fail(function(jqXHR, textStatus){alert(textStatus);});
+}
+
+function checkPeriod(value){
+	if(value=="true"){
+	    $( "#sRegDate" ).datepicker();
+	    $( "#eRegDate" ).datepicker();
+	}else{
+	    $( "#sRegDate" ).datepicker("destroy");
+	    $( "#eRegDate" ).datepicker("destroy");
+
+	}
+}
+function checkCost(value){
+	if(value=="true"){		
+		document.getElementById("cost").disabled=false;
+	}else{
+		document.getElementById("cost").disabled=true;
+		document.getElementById("cost").value = 0;
+	}
+}
+function checkCapa(value){
+	if(value=="true"){		
+		document.getElementById("capa").disabled=false;
+	}else{
+		document.getElementById("capa").disabled=true;
+		document.getElementById("capa").value = 0;
+	}
+}
+
+</script>
+</head>
+
+<body>
+	<div id="wrap">
+		<div th:replace="header :: contents"></div>
+		<div id="container">
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>T. A. Think</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think</span>
+					<div class="place">
+						<span><a th:href="@{/}">Home</a></span> > 관리자 메뉴 > 과목관리</div>
+					</div>
+				</div>
+			</div>
+			<div id="contents_container">
+				<div class="lnb">
+					<div th:replace="admin/adminLnb :: contents"></div>
+				</div>
+				<div class="subcontents" style="display:">					
+					<div id="step02">
+						<form name="regForm" th:action="@{/admin/regClass}" id="regForm" onsubmit="return regSubmit();" method="post" enctype="multipart/form-data">
+							<input type="hidden" id="seq" name="seq" value = "-1">
+							<input type="hidden" id="offlineStudyInfoSeq" name="offlineStudyInfoSeq" value="-1">
+							<input type="hidden" id="teacherUsername" name="teacherUsername">
+							<input type="hidden" id="teacherRealname" name="teacherRealname">							
+							<input type="hidden" id="courseSeq" name="courseSeq">
+							<input type="hidden" id="courseCode" name="courseCode">
+							<input type="hidden" id="courseName" name="courseName">
+							<input type="hidden" id="startRegDate" name="startRegDate">
+							<input type="hidden" id="endRegDate" name="endRegDate">
+							<input type="hidden" id="startStudyDate" name="startStudyDate">
+							<input type="hidden" id="endStudyDate" name="endStudyDate">
+							<h4 th:if="${classSeq==null}">강좌정보 입력</h4>							
+							<h4 th:unless="${classSeq==null}">강좌정보 수정</h4>
+							<div class="table">
+								<p class="tableTop02">
+									<span class="star">별표</span>필수입력항목
+								</p>
+								<table>
+									<caption>과목정보를 입력하는 서식</caption>
+									<colgroup>
+										<col style="width: 20%;">
+										<col style="width: *;">
+									</colgroup>
+									<tbody>									
+										<tr>
+											<th scope="row">
+												<label for="courseName">과목</label>
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<input type="text" id="cName" name="cName" placeholder="과목을 설정하세요." style="width:80%;" maxlength="200" disabled="disabled">													
+												</span>
+												<span class="btnBasic light">
+													<button type="button" id="addCourse" name="addCourse" onclick="onClickAddCourse();">검색</button>
+												</span>	
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="classCode">강좌코드</label>
+												<span 	class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement">
+													<input type="text" id="code" name="code" placeholder="강좌코드를 입력하세요." style="width: 228px;" maxlength="20" >
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="className">강좌명</label>
+												<span 	class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement">
+													<input type="text" id="name" name="name" placeholder="강좌명을 입력하세요." style="width:100%;" maxlength="200" >
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="teacherName">담당교수</label> 
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<input type="text" id="teacherName" name="teacherName" placeholder="담당교수를 설정하세요." style="width: 228px;" maxlength="20" disabled="disabled">													
+												</span>
+												<span class="btnBasic light">
+													<button type="button" id="addTeacher" name="addTeacher" onclick="onClickAddTeacher();">검색</button>
+												</span>	
+											</td>
+										</tr>										
+										<tr>																																							<tr>
+											<th scope="row">
+												<label for="regDate">신청기간</label>
+												<span 	class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement">
+													<input type="radio" name="radioPeriod" id="regPeriod" value=true onclick="checkPeriod(this.value)" checked="checked">
+													<input type="text" id="sRegDate" name="sRegDate" placeholder="신청시작일을 설정하세요." style="width:200px;" disabled="disabled">
+													<label>~</label>
+													<input type="text" id="eRegDate" name="eRegDate" placeholder="신청종료일을 설정하세요." style="width:200px;" disabled="disabled">
+												</span>
+												<span>   </span>
+												<span class="formElement"> 
+													<input type="radio" name="radioPeriod" id="regAlways" value=false onclick="checkPeriod(this.value)" > 
+													<label class="radio">상시</label>
+												</span>
+												
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="studyDate">교육기간</label>
+												<span 	class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement">
+													<input type="text" id="sStudyDate" name="sStudyDate" placeholder="교육시작일을 설정하세요." style="width:200px;" disabled="disabled">
+													<label>~</label>
+													<input type="text" id="eStudyDate" name="eStudyDate" placeholder="교육종료일을 설정하세요." style="width:200px;" disabled="disabled">
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="time">교육시간</label>
+												<span 	class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement">
+													<input type="text" id="time" name="time" placeholder="예) 매주수요일 오후7시부터 2시간" style="width:100%;" maxlength="200" >
+												</span>
+											</td>
+										</tr>																																							
+										<tr>
+											<th scope="row">
+												<label for="cost">교육비</label> 
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement">
+													<input type="radio" name="radioCost" id="costNeed" value=true onclick="checkCost(this.value)" checked="checked">
+													<input type="number" id="cost" name="cost" placeholder="예) 50000" style="width: 100px;" maxlength="20" >원
+												</span>
+												<span class="formElement">
+													<input type="radio" name="radioCost" id="costFree" value=false onclick="checkCost(this.value)"> 
+													<label class="radio">무료</label>
+												</span>												
+											</td>										
+										</tr>										
+										<tr>
+											<th scope="row">
+												<label for="capa">정원</label> 
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<input type="radio" name="radioCapa" id="capaLimit" value=true onclick="checkCapa(this.value)" checked="checked">
+													<input type="number" id="capa" name="capa" placeholder="예) 20" style="width: 100px;" maxlength="20" >명
+												</span>
+												<span class="formElement">
+													<input type="radio" name="radioCapa" id="capaUnlimit" value=false onclick="checkCapa(this.value)"> 
+													<label class="radio">제한없음</label>
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="info">온/오프라인</label> 
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement disab" id="onoff">오프라인</span>
+							                </td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="no">과목차시</label> 
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<input type="number" id="no" name="no" placeholder="과목차시를 입력하세요." style="width:200px;" maxlength="20" >
+												</span>
+											</td>
+										</tr>										
+										<tr>										
+									</tbody>
+								</table>
+							</div>							
+							<h5>강의목차<span class="star">별표</span></h5>
+							<div class="tbList">
+								<table border="1" cellspacing="0" summary="강좌리스트">
+									<caption>강의리스트</caption>
+									<colgroup>
+										<col width="40px">
+										<col width="60px">
+										<col width="400px">
+									</colgroup>
+									<thead>
+										<tr>
+											<th scope="col"><input type="checkbox" id="lessonAllCheck" name="lessonAllCheck" onclick="onClickAllCheck()"></th>
+											<th scope="col">차시</th>
+											<th scope="col">강의내용</th>
+										</tr>
+									</thead>
+									<tbody id="lessonListContainer"></tbody>
+								</table>
+							</div>							
+							<div class="btnWrap right">
+								<span class="btnBasic light">
+									<a href="javascript:onDeleteLesson()">- 선택된 강의목차 삭제</a>
+								</span>							
+								<span class="btnBasic">
+									<button type="button" id="addLesson" name="addLesson" onclick="onClickAddLesson();">+ 강의목차 추가</button>
+								</span> 
+							</div>																										
+							<div class="btnWrap center">
+								<span class="btnLarge">
+									<button th:if="${classSeq==null}" type="submit">등록</button>
+									<button th:unless="${classSeq==null}" type="submit">수정</button>
+								</span> 
+								<span class="btnLarge light">
+									<a href="javascript:history.back()" style="height: 46px">취소</a>
+								</span>
+							</div>												
+						</form>
+						<div th:replace="admin/widgetCourseList :: contents"></div>
+						<div th:replace="admin/widgetTeacherList :: contents"></div>						
+					</div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>
+

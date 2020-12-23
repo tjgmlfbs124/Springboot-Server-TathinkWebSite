@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}" />
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}" />
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<!--[if lt IE 9]>
+	<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+<![endif]-->
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+</script>
+</head>
+
+<body>
+	<div id="wrap"> 
+  		<div th:replace="header :: contents"></div>
+  		<div id="container"> 
+    		<div class="subhead">
+      			<div class="subtitle">
+        			<h2>T. A. Think</h2>
+        			<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think</span>
+        			<div class="place"><span><a th:href="@{/}">Home</a></span> > 이용약관</div>
+      			</div>
+    		</div>
+    		<div id="contents_container"> 
+      			<div id="lnb" class="lnb">
+      				<div th:replace="join/joinLnb :: contents"></div>
+      			</div>
+      			<div class="subcontents" style="display:">
+      				<h3>이용약관</h3>
+        			<div class="termsWrap2">
+          				<div th:replace="join/joinTermContents :: contents"></div>
+          			</div>
+      			</div>
+    		</div>
+  		</div>
+  		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

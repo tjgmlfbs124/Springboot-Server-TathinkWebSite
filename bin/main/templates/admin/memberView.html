@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="viewBox" style="display:none">
+<script th:inline="javascript">
+	var viewBox = document.getElementById("viewBox");
+	var level = "";
+	
+	function showMemberList(){
+		document.getElementById("listBox").style.display="";
+	}
+	
+	function hideMemberList(){
+		document.getElementById("listBox").style.display="none";
+	}
+		
+	function hideMemberView()
+	{
+		viewBox.style.display="none";
+		location.href = "#contents_container";
+	}
+	
+	function showMemberView(username)
+	{
+		var reqObj = new Object();
+		var pwd = null;
+
+	    reqObj.username = username;
+	    
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/viewMember}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.done(function (data)
+	    {      	
+	    	var responseData = JSON.parse(data);
+	    	
+	      	if(!responseData)
+	      	{
+	         	alert("세션이 만료되어 재접속이 필요합니다.");
+	         	return false;
+	      	}    
+	      	
+	    	if(responseData.error != null)
+	    	{
+	    		alert(responseData.error);
+	    		return false;
+	    	}
+	    	
+	    	viewBox.style.display = "block";
+	    	location.href = "#viewBox";
+	      	
+	    	var level = document.getElementById("level");
+	    	var photo = document.getElementById("photo");
+	    	var realname = document.getElementById("realname");
+			var username = document.getElementById("username"); 
+			var email = document.getElementById("email");
+			var bRcvEmail = document.getElementById("bRcvEmail");
+			var mobile = document.getElementById("mobile");
+			var bRevSms = document.getElementById("bRevSms");
+			var idNumber = document.getElementById("idNumber");
+			var male = document.getElementById("male");
+			var female = document.getElementById("female");
+			var category = document.getElementById("category");
+			var company = document.getElementById("company");
+			var grade = document.getElementById("grade");
+			var protector = document.getElementById("protector");
+			var protecterMobile = document.getElementById("protecterMobile");
+			var bRevProtecterSms = document.getElementById("bRevProtecterSms");
+			var joinPath = document.getElementById("joinPath");
+			var zipCode = document.getElementById("zipCode");
+			var address01 = document.getElementById("address01");
+			var address02 = document.getElementById("address02");
+			var teacherInfoContainer = document.getElementById("teacherInfoContainer");
+			var jobPosition = document.getElementById("jobPosition");
+			var teacherInfo = document.getElementById("teacherInfo");
+			
+			var rootPath = /*[[@{/}]]*/
+				
+			if(responseData.imgPath == null || responseData.imgPath.length < 1)
+			{
+				photo.src="";
+			}
+			else
+			{
+				photo.src = rootPath+responseData.imgPath.substr(1);
+			}
+
+			if(responseData.level == "LEVEL_ADMIN")
+			{
+				level.textContent = "관리자";
+				teacherInfoContainer.style.display="block";
+				setClassListTitle("강좌정보");
+				itemChange();
+			}
+			else if(responseData.level == "LEVEL_TEACHER")
+			{	
+				level.textContent = "선생님";
+				teacherInfoContainer.style.display="block";
+				setClassListTitle("강좌정보");
+				itemChange();
+			}
+			else if(responseData.level == "LEVEL_MEMBER")
+			{
+				level.textContent = "일반";
+				teacherInfoContainer.style.display="none";
+				setClassListTitle("수강정보");
+			}
+			
+			realname.textContent = responseData.realname;
+			username.textContent = responseData.username;
+			email.textContent = responseData.email;
+					
+			if(responseData.bRcvEmail)
+				bRcvEmail.checked = true;
+			else
+				bRcvEmail.checked = false;
+			
+			mobile.textContent = responseData.mobile;
+			
+			if(responseData.bRevSms)
+				bRevSms.checked = true;
+			else
+				bRevSms.checked = false;
+			
+			idNumber.textContent = responseData.idNumber;
+			
+			if(responseData.bMan)
+			{
+				male.checked = true;
+				female.checked =  false;
+			}
+			else
+			{
+				male.checked = false;
+				female.checked = true;
+			}
+			
+			category.textContent = responseData.memberCategory;
+			company.textContent = responseData.company;
+			grade.textContent = responseData.grade;
+			protector.textContent = responseData.protector;
+			protecterMobile.textContent = responseData.protectorMobile;
+			
+			if(responseData.bRevProtecterSms)
+				bRevProtecterSms.checked = true;
+			else
+				bRevProtecterSms.checked = false;
+			
+			joinPath.textContent = responseData.joinPath;
+			zipCode.textContent = responseData.zipCode;
+			address01.textContent = responseData.address01;
+			address02.textContent = responseData.address02;
+			
+			jobPosition.textContent = responseData.jobPosition;
+			teacherInfo.innerHTML = responseData.teacherInfo;
+			
+	      	viewBoxbtnList.style.display = "inline";
+	      	
+	      	viewData = responseData;
+	    });
+	    
+	    request.fail(function(jqXHR, textStatus){     	
+	        alert(textStatus);
+	    });
+	}
+	
+	function onClickList()
+	{		
+		hideMemberView();
+		hideMyClassView();
+		showMemberList();
+	}
+	
+</script>
+	<h3>회원정보 상세 보기</h3>
+	<div class="table">
+       	<table class="upphoto">
+           	<caption>회원사진</caption>
+			<colgroup>
+				<col style="width:150px;">
+			</colgroup>
+			<tbody>
+				<tr>
+					<td>
+						<div class="join_photo">
+							<img id="photo" width="130" height="163" alt=""/>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="table">
+		<table border="1" cellspacing="0" summary="회원정보 상세 보기">
+			<caption>회원정보 상세 보기</caption>
+			<colgroup>
+	            <col style="width:20%;">
+	            <col style="width:*;">
+			</colgroup>
+			<tbody>
+				<tr>
+					<th scope="row"><label for="level">등급</label></th>
+					<td>
+						<span class="formElement disab" id="level"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="userRealName">성명</label></th>
+					<td>
+						<span class="formElement disab" id="realname"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="userId">아이디</label></th>
+					<td>
+						<span class="formElement disab" id="username"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">이메일 주소</th>
+					<td>
+						<span class="formElement disab" id="email"></span> 
+						<p class="formElement disab">
+							<input type="checkbox" id="bRcvEmail" disabled="true">
+							<label for="emailAgree" class="checkbox">이메일수신 동의</label>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<span id="th_TA_mobileNo">휴대전화</span>
+					</th>
+					<td>
+						<span class="formElement disab" id="mobile"></span>
+						<p class="formElement disab">
+							<input type="checkbox" id="bRevSms" disabled="true">
+							<label for="mobileAgree" class="checkbox">SMS수신 동의</label>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label>생년월일6자리</label></th>
+	                <td>
+						<span class="formElement disab" id="idNumber"></span>
+	                </td>
+				</tr>
+				<tr>
+					<th scope="row">성별</th>
+					<td>
+						<span class="formElement disab">
+							<input type="radio" disabled="true" id="male">
+							<label for="male" class="radio">남</label>
+						</span> 
+						<span class="formElement disab">
+							<input type="radio" disabled="true" id="female">
+							<label for="female" class="radio">여</label>
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">회원분류</th>
+					<td>
+						<span class="formElement disab" id="category"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="schoolname">학교/회사명</label>
+					</th>
+					<td>
+						<span class="formElement disab" id="company"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="grade">학년</label>
+					</th>
+					<td>
+						<span class="formElement disab" id="grade"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="parent">보호자 성함</label>
+					</th>
+					<td>
+						<span class="formElement disab" id="protector"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label>보호자휴대전화</label>
+					</th>
+					<td>
+						<span class="formElement disab" id="protecterMobile"></span>
+						<p class="formElement disab">
+							<input type="checkbox" id="bRevProtecterSms" disabled="true">
+							<label for="parentmobileagree" class="checkbox">SMS수신 동의</label>
+						</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">가입경로</th>
+					<td>
+						<span class="formElement disab" id="joinPath"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">주소</th>
+					<td>
+						<span class="formElement disab" id="zipCode"></span>
+						<p style="margin-top:10px">
+							<span class="formElement disab" id="address01"></span>
+							<span class="formElement disab" id="address02"></span>
+						</p>
+					</td>
+				</tr>
+			</tbody>
+		</table>   
+		<div id="teacherInfoContainer">
+			<h4>교수정보</h4>
+			<div class="table">
+				<table>
+					<caption>교수정보</caption>
+					<colgroup>
+						<col style="width:20%;">
+						<col style="width:*;">
+					</colgroup>
+					<tbody>
+						<tr>
+							<th scope="row">
+								<label for="teacher">직책</label>
+							</th>
+							<td>
+								<span class="formElement disab" id="jobPosition"></span>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row">
+								<label for="teacherintro">교수소개</label>
+							</th>
+							<td>
+								<div id="teacherInfo"></div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div> 
+		</div>       
+		<div class="btnWrap">
+				<span class="btnBasic light" id="viewBoxbtnList"> <button type="button" onclick="onClickList();">목록</button></span>
+		</div>			
+	</div>
+	<div th:replace="admin/memeberViewClassList :: contents"></div>
+</div>
+</body>
+</html>

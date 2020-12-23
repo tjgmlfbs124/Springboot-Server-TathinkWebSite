@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+</head>
+
+<body>   
+	<div id="header" th:fragment="contents">                                               
+	    <div id="util"> <span class="slogan"><img th:src="@{/images/ui/common/slogan.png}" width="240" height="31" alt="논리수학적으로 깊이 생각하는 힘!"/></span>
+	      <ul>
+	        <li th:if="${member != null}" class="joinps"><th:block th:text="${member.realname}+'님 어서오세요'"></li>
+	        <li th:if="${member == null}"><a class="ft" th:href="@{/join/login}" >로그인</a></li>
+	        <li th:if="${member != null}"><a 			th:href="@{/join/logout}">로그아웃</a></li>
+	        <li th:if="${member == null}"><a 			th:href="@{/join/reg}">회원가입</a></li>
+	        <li th:if="${member != null && (member.level == 'LEVEL_ADMIN' || member.level == 'LEVEL_TEACHER')}"><a th:href="@{/admin/listCourseInfo}">관리자메뉴</a></li>
+	      </ul>
+	    </div>
+	    <div class="gnbWrap">
+	      <div class="inner">
+	        <h1><a th:href="@{/}"><img th:src="@{/images/ui/common/logo.png}" width="139" height="75" alt="TAThink"/></a></h1>
+	        <div id="gnb">
+	          <ul>
+	            <li><span><a th:href="@{/course}">강의소개</a></span>
+	              <ul style="display:none;">
+	              	<li th:each="courseLevelData : ${listCourseLevel}"><a th:href="@{${'/course?levelSeq='+courseLevelData.seq}}">[[${courseLevelData.levelName}]]</a></li>
+	              </ul>
+	            </li>
+	            <li><span><a th:href="@{/teacher/listTeacher}">교수진소개</a></span>
+	              <ul style="display:none;">
+	                <li><a th:href="@{/teacher/listTeacher}">T. A. Think 선생님</a></li>
+	                <li><a th:href="@{/teacher/recruitTeacher}">선생님 모집</a></li>
+	              </ul>
+	            </li>
+	            <li><span><a th:href="@{/course}">코딩교실</a></span>
+	              <ul style="display:none;">
+	                <li><a th:href="@{/teacher/listTeacher}">바로가기</a></li>
+	              </ul>
+	            </li>
+	            <li th:if="${member != null && (member.level == 'LEVEL_MEMBER' || member.level == 'LEVEL_TEACHER' )}"><span><a th:href="@{/myroom/myclass}">나의 강의실</a></span>
+	              <ul style="display:none;">
+	                <li><a th:href="@{/myroom/myclass}">수강현황</a></li>
+	                <li><a th:href="@{/myroom/memberModify}">회원정보 수정</a></li>
+	              </ul>
+	            </li>
+	            <li th:if="${member != null && (member.level == 'LEVEL_ADMIN')}"><span><a th:href="@{/myroom/memberModify}">나의 강의실</a></span>
+	              <ul style="display:none;">
+	              	<li><a th:href="@{/myroom/myclass}">수강현황</a></li>
+	                <li><a th:href="@{/myroom/memberModify}">회원정보 수정</a></li>
+	              </ul>
+	            </li>	            
+	            <li ><span><a th:href="@{/tathinkInfo/descript}">T. A. Think?</a></span>
+	              <ul style="display:none;">
+	                <li><a th:href="@{/tathinkInfo/descript}">T. A. Think 소개</a></li>
+	                <li><a th:href="@{/tathinkInfo/intro}">미래직업변화와<br/>코딩교육</a></li>
+	                <li><a th:href="@{/tathinkInfo/location}">교육센터 오시는길</a></li>
+	              </ul>
+	            </li>
+	            <li ><span><a th:href="@{/board/notice}">고객센터</a></span>
+	              <ul style="display:none;">
+	                <li><a th:href="@{/board/notice}">공지사항</a></li>
+	                <li><a th:href="@{/board/faq}">FAQ</a></li>
+	                <li><a th:href="@{/board/qna}">Q&amp;A</a></li>
+	                <li><a th:href="@{/board/questionGroupEdu}">단체교육 문의</a></li>
+	              </ul>
+	            </li>
+	          </ul>
+	        </div>
+	      </div>
+	    </div>
+	</div>
+</body>
+</html>

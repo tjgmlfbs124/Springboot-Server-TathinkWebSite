@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+var bManager = false;
+
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	
+	search("", 0);
+	
+	bManager = /*[[${(member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN'))}]]*/;
+});
+
+var gSearchWord = "";
+var gPageIdx = "0";
+
+function searchPage(page)
+{
+	search(gSearchWord, page);
+}
+
+function search(word, page)
+{	
+	var reqObj = new Object();
+
+	hideFaqInputBox();	
+	
+	gSearchWord = word;
+	gPageIdx = page;
+	
+    reqObj.word = word;
+    reqObj.pageIdx = page;
+        
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/listFaq}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(makeList);
+    
+    request.fail(function(jqXHR, textStatus){ 
+        alert(textStatus);
+    });
+}
+
+function makeList(data)
+{
+	var responseData = JSON.parse(data);
+    
+  	if(!responseData)
+  	{
+     	alert("세션이 만료되어 재접속이 필요합니다.");
+     	return false;
+  	}   
+  	
+  	if(responseData.error != null)
+  	{
+     	alert(responseData.error);
+     	return false;
+  	}
+  	
+  	clearFaq();
+  	
+  	if(responseData.faqList.length>0)
+  		document.getElementById("empty").style.display="none";
+  	
+  	for(i = 0; i < responseData.faqList.length; i ++)
+	{
+  		addFaq(responseData.faqList[i]);
+	}
+  	
+    if(responseData.pageCnt != 0)
+    {
+      addPaginate(responseData);
+    }
+}
+
+function clearFaq()
+{
+    var faqListContainer = document.getElementById("faqListContainer");
+    var paginate = document.getElementById("paginate");	
+    
+    document.getElementById("empty").style.display="";
+    faqListContainer.innerHTML = "";
+    paginate.innerHTML = "";
+}
+
+function addFaq(faqData)
+{	
+	var faqListContainer = document.getElementById('faqListContainer')
+  	var row = document.createElement("li");
+	var questionBox = document.createElement("p");
+	var questionIcon = document.createElement("span");
+	var questionContent = document.createElement("a");
+	var deleteCheckBox = document.createElement("span");
+	var deleteCheck = document.createElement("input");
+	var answerBox = document.createElement("p");
+	var dotLine = document.createElement("span");
+	var modifyBtnBox = document.createElement("span");
+	var modifyBtn = document.createElement("a");
+	
+	row.setAttribute("class", "article hide");
+	row.setAttribute("id", "faqContent");
+	row.setAttribute("name", "faqContent");
+	
+	questionBox.setAttribute("class", "q");
+	questionIcon.setAttribute("class", "icon");
+	questionContent.setAttribute("class", "trigger");
+	questionContent.setAttribute("href", "#a1");
+	questionContent.setAttribute("onclick", "hideShowContent(this)");
+	questionContent.innerHTML = faqData.qContent;
+	questionContent.innerHTML = questionContent.innerHTML.replace(/\n\r?/g, '<br />');
+	deleteCheckBox.setAttribute("class", "select");
+	deleteCheck.setAttribute("type", "checkbox");
+	deleteCheck.setAttribute("id", "FAQCheck");
+	deleteCheck.setAttribute("name", "FAQCheck");
+	deleteCheck.setAttribute("value", faqData.seq);
+	answerBox.setAttribute("class", "a");
+	answerBox.setAttribute("id", "aContentView");
+	answerBox.setAttribute("name", "aContentView");
+	answerBox.setAttribute("style", "display:none;");
+	dotLine.setAttribute("class", "dotline");
+	answerBox.appendChild(dotLine);
+	answerBox.innerHTML = faqData.aContent;
+	answerBox.innerHTML = answerBox.innerHTML.replace(/\n\r?/g, '<br />');
+	modifyBtnBox.setAttribute("class", "minibtns");
+	modifyBtn.setAttribute("class", "btn_modify");	
+	modifyBtn.onclick = function(){onClickModify(faqData.seq, faqData.qContent, faqData.aContent);};
+	modifyBtn.innerHTML="수정";
+	
+	if(bManager == false)
+	{
+		deleteCheckBox.setAttribute("style", "display:none;");
+		modifyBtnBox.setAttribute("style", "display:none;");
+	}
+	
+	deleteCheckBox.appendChild(deleteCheck);
+	questionBox.appendChild(questionIcon);
+	questionBox.appendChild(questionContent);
+	questionBox.appendChild(deleteCheckBox);
+	
+	modifyBtnBox.appendChild(modifyBtn);
+	answerBox.appendChild(modifyBtnBox);
+	
+	row.appendChild(questionBox);
+	row.appendChild(answerBox);
+	
+	faqListContainer.appendChild(row);
+}
+
+function addPaginate(pageData)
+{	
+	var paginate = document.getElementById("paginate");
+	var first  = document.createElement("a");
+	
+	first.setAttribute("class", "first");
+  	first.setAttribute("href", "javascript:{}");
+  	first.setAttribute("onclick", "searchPage('0');");
+  	first.innerHTML="맨처음으로";
+  	paginate.appendChild(first);
+  	    
+  	if(!(pageData.currPageIdx < 6))
+  	{
+    	var pre = document.createElement("a");
+    	pre.setAttribute("class", "pre");
+    	pre.setAttribute("href", "javascript:{}");
+    	pre.setAttribute("onclick", "searchPage('"+(pageData.startPageIdx-2)+"');");
+    	pre.innerHTML="이전페이지";
+    	paginate.appendChild(pre);
+  	}   
+  
+  	var pageBox  = document.createElement("div");
+  	paginate.appendChild(pageBox);
+  
+  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+  	{
+    	if(i!=pageData.currPageIdx)
+    	{
+      		var p  = document.createElement("a");
+      		p.setAttribute("href", "javascript:{}");
+      		p.setAttribute("onclick", "searchPage('"+(i-1)+"');");
+      		p.innerHTML=""+i;
+      
+      		pageBox.appendChild(p);
+    	}
+    	else
+    	{
+      		var s  = document.createElement("strong");
+      		s.setAttribute("href", "javascript:{}");
+      		s.setAttribute("onclick", "searchPage('"+(i-1)+"');");
+      		s.innerHTML=""+i;
+      		pageBox.appendChild(s);
+    	}
+  	}    
+   	
+  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+  	{
+    	var next = document.createElement("a");
+    	next.setAttribute("class", "next");
+    	next.setAttribute("href", "javascript:{}");
+    	next.setAttribute("onclick", "searchPage('"+pageData.endPageIdx+"');");
+    	next.innerHTML="다음페이지";
+    	paginate.appendChild(next);
+  	}  
+  
+  	var last   = document.createElement("a");
+  	last.setAttribute("class", "last");
+  	last.setAttribute("href", "javascript:{}");
+  	last.setAttribute("onclick", "searchPage('"+(pageData.pageCnt-1)+"');");
+  	last.innerHTML="맨마지막";
+  	paginate.appendChild(last);
+}
+
+function onClickSearch()
+{
+	var searchValue = document.getElementById("searchValue");
+	search(searchValue.value,0);
+}
+
+function onClickWirte()
+{
+	var tempInputSet = document.getElementById("tempInputSet");
+	var qContentInput = document.getElementById("qContentInput");
+	var aContentInput = document.getElementById("aContentInput");
+	var updateSeq = document.getElementById("updateSeq");
+
+	qContentInput.value = "";
+	aContentInput.value = "";
+	updateSeq.value = -1;
+	
+	tempInputSet.setAttribute("style", "display:block;");
+	
+	location.href = "#qContentInput";
+
+}
+
+function onClickModify(seq, qContent, aContent)
+{
+	var tempInputSet = document.getElementById("tempInputSet");
+	var qContentInput = document.getElementById("qContentInput");
+	var aContentInput = document.getElementById("aContentInput");
+	var updateSeq = document.getElementById("updateSeq");
+	
+	qContentInput.value = qContent;
+	aContentInput.value = aContent;
+	updateSeq.value = seq;
+	
+	tempInputSet.setAttribute("style", "display:block;");
+	
+	location.href = "#qContentInput";
+}
+
+function onClickCancle()
+{
+	hideFaqInputBox();	
+	
+	location.href = "#faqListContainer";
+}
+
+function onClickAllCheck()
+{
+    if( $("#FAQAllCheck").is(':checked') )
+    {
+        $("input[name=FAQCheck]").prop("checked", true);
+    }
+    else
+    {
+       $("input[name=FAQCheck]").prop("checked", false);
+    }
+}
+
+function onClickDelete()
+{	
+	var checkRow = "";
+	
+	hideFaqInputBox();
+	
+	$( "input[name='FAQCheck']:checked" ).each (
+		function ()
+		{
+			checkRow = checkRow + $(this).val()+":" ;
+		}
+	);
+	
+	checkRow = checkRow.substring(0,checkRow.lastIndexOf( ":"));
+	
+	if(checkRow == '')
+	{
+	  alert("삭제할 FAQ를 선택하세요.");
+	  return false;
+	}
+	
+	if(confirm("선택한 FAQ를 삭제 하시겠습니까?"))
+	{
+		deleteFaq(checkRow);
+	}	
+}
+
+function writeFaq()
+{	
+	var reqObj = new Object();
+	
+	var qContentInput = document.getElementById("qContentInput");
+	var aContentInput = document.getElementById("aContentInput");
+	var updateSeq = document.getElementById("updateSeq");
+	
+	if((qContentInput.value==null || qContentInput.value=="")
+			|| (aContentInput.value==null || aContentInput.value=="")){
+		alert("FAQ 내용을 입력하세요");
+		return false;
+	}
+	
+    reqObj.seq = updateSeq.value;
+    reqObj.qContent = qContentInput.value;
+    reqObj.aContent = aContentInput.value;
+    reqObj.word = gSearchWord;
+    reqObj.pageIdx = gPageIdx;
+    
+    var request = $.ajax(
+	{
+		url     : /*[[@{/api/writeFaq}]]*/, 
+		type    : "post",
+		data    : reqObj,
+		dataType: "text"          
+	});
+    
+    request.success(makeList);
+    
+    request.done(onClickCancle());
+    
+    request.fail(function(jqXHR, textStatus){     	
+        alert(textStatus);
+    });
+}
+
+function deleteFaq(checkRow)
+{
+	var reqObj = new Object();
+	
+    reqObj.listSeq = checkRow;
+    reqObj.word = gSearchWord;
+    reqObj.pageIdx = gPageIdx;
+    
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/deleteFaq}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.success(makeList);
+        
+    request.fail(function(jqXHR, textStatus){     	
+        alert(textStatus);
+    });
+}
+
+function hideFaqInputBox()
+{
+	var tempInputSet = document.getElementById("tempInputSet");
+	tempInputSet.setAttribute("style", "display:none;");
+}
+
+var asas = false;
+function hideShowContent(obj){
+	var content = obj.parentNode.parentNode;
+	if(asas){
+		content.querySelector("#aContentView").style.display = "none";
+		asas = false;
+	}
+	else{
+		content.querySelector("#aContentView").style.display = "block";
+		asas = true;
+	}
+}
+
+jQuery(function(){	
+	var article = $('.faq .article');
+	article.addClass('hide');
+	article.find('.a').slideUp(100);
+});
+</script>
+</head>
+
+<body>
+	<div id="wrap"> 
+		<div th:replace="header :: contents"></div>
+		<div id="container"> 
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>고객센터</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think!</span>
+					<div class="place"><span><a th:href="@{/}">Home</a></span> > 고객센터 > FAQ</div>
+				</div>
+			</div>
+			<div id="contents_container"> 
+				<div class="lnb">
+					<div th:replace="board/boardLnb :: contents"></div>
+				</div>
+      			<div class="subcontents">
+      				<h3>FAQ - 자주묻는 질문</h3>
+					<div class="faqsearch" style="text-align:center">
+						<input type="text" id="searchValue" name="searchValue" title="" style="width:400px">
+						<button id="btnSearch" onclick="onClickSearch();">검색</button>
+					</div>
+					<div class="btnWrap left" th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}"> 
+						<span class="btnBasic light"><button type="button" id="form01" onclick="onClickDelete();">삭제</button></span> 
+						<span class="btnBasic blue"> <button type="button" id="form02" onclick="onClickWirte();">글쓰기</button> </span> 
+						<span class="selectall"><input type="checkbox" id="FAQAllCheck" name="FAQAllCheck" onclick="onClickAllCheck();"></span> 
+					</div> 
+					<div class="faq">                           
+						<ul id="faqListContainer"> 
+						</ul>
+					</div>					
+					<div id="paginate" class="paginate"></div>
+					<div id = "empty" style="text-align:center;">정보가 없습니다.</div>
+					<div class="faq" id="tempInputSet" style="display:none">
+						<p class='q'>
+							<span class='icon'>Q</span>
+							<a class='trigger' href='#a6'>
+								<input type='text' id='qContentInput' name='qContentInput' placeholder='질문을 입력하세요.' style='width:500px;' maxlength='' data_TA_id='' >
+							</a>
+						</p>
+						<p class='a'>
+							<span class='dotline'></span>
+							<textarea title='글쓰기' rows='5' id='aContentInput' name='aContentInput' style='width:720px'></textarea>
+							<input type="hidden" id="updateSeq" name="updateSeq"/>
+							<span class='minibtns'>
+								<a class='btn_ok' href='javascript:{}' onclick='writeFaq();'>확인</a>
+								<a class='btn_cancel' href='javascript:{}' onclick="onClickCancle();">취소</a>
+							</span>
+						</p>
+					</div> 				
+      			</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

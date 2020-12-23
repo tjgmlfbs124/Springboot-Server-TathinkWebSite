@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+</head>
+
+<body>                                                
+	<div th:fragment="contents" class="lnb_menu" id="lnb_menu">
+		<ul>
+			<li><a th:href="@{/tathinkInfo/descript}" 	th:classappend="${pageName} == 'descript'?on:none">T. A. Think 소개</a></li>
+			<li><a th:href="@{/tathinkInfo/intro}" th:classappend="${pageName} == 'intro'?on:none" style="padding-right:70px;padding-top:10px;padding-bottom:10px;line-height:1.2;">미래직업변화와 코딩교육</a></li>
+			<li><a th:href="@{/tathinkInfo/location}" th:classappend="${pageName} == 'location'?on:none">교육센터 오시는길</a></li>
+		</ul>
+	</div>
+</body>
+</html>

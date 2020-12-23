@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="viewBox" style="display:none">
+<script th:inline="javascript">
+	var viewBox = document.getElementById("viewBox");
+
+	function hideQuestionGroupEduView()
+	{
+		viewBox.style.display="none";
+		location.href = "#contents_container";
+	}
+	
+	function showQuestionGroupEduView(seq)
+	{
+		var reqObj = new Object();
+		var pwd = null;
+
+	    reqObj.seq = seq;
+	    
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/viewQuestionGroupEdu}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.done(function (data)
+	    {      	
+	    	var responseData = JSON.parse(data);
+	    	
+	      	if(!responseData)
+	      	{
+	         	alert("세션이 만료되어 재접속이 필요합니다.");
+	         	return false;
+	      	}    
+	      	
+	    	if(responseData.error != null)
+	    	{
+	    		alert(responseData.error);
+	    		return false;
+	    	}
+	    	
+	    	viewBox.style.display = "block";
+	    	location.href = "#viewBox";
+	    	
+	    	var viewBoxTitle = document.getElementById("viewBoxTitle");
+	    	var viewBoxCompanyName = document.getElementById("viewBoxCompanyName");
+	    	var viewBoxCharder = document.getElementById("viewBoxCharder");
+	    	var viewBoxMobile = document.getElementById("viewBoxMobile");
+	    	var viewBoxEmail = document.getElementById("viewBoxEmail");
+	    	var viewBoxRegDate = document.getElementById("viewBoxRegDate");
+	    	var viewBoxState = document.getElementById("viewBoxState");
+	    	var viewBoxContent = document.getElementById("viewBoxContent");
+	    	var viewBoxbtnDel = document.getElementById("viewBoxbtnDel");
+	    	var viewBoxbtnAnswer = document.getElementById("viewBoxbtnAnswer");
+	    	var viewBoxbtnList = document.getElementById("viewBoxbtnList");
+	    	
+	    	viewBoxTitle.textContent = responseData.title;
+	    	viewBoxTitle.innerHTML = viewBoxTitle.innerHTML.replace(/\n\r?/g, '<br />');
+	    	
+	    	viewBoxCompanyName.textContent = responseData.companyName;
+	    	viewBoxCompanyName.innerHTML = viewBoxCompanyName.innerHTML.replace(/\n\r?/g, '<br />');
+	    	
+	    	viewBoxCharder.textContent = responseData.charder;
+	    	viewBoxCharder.innerHTML = viewBoxCharder.innerHTML.replace(/\n\r?/g, '<br />');
+	    	
+	    	viewBoxMobile.textContent = responseData.mobile01+"-"+responseData.mobile02+"-"+responseData.mobile03;
+	    	viewBoxMobile.innerHTML = viewBoxMobile.innerHTML.replace(/\n\r?/g, '<br />');
+	    	
+	    	viewBoxEmail.textContent = responseData.email01+"@"+responseData.email02;
+	    	viewBoxEmail.innerHTML = viewBoxEmail.innerHTML.replace(/\n\r?/g, '<br />');
+	    	
+	    	viewBoxRegDate.textContent = convertDateTimeString(responseData.regDate);
+	    	viewBoxState.textContent = responseData.state;
+	    	viewBoxContent.innerHTML = responseData.content;
+	      	
+	      	viewData = responseData;
+	    });
+	    
+	    request.fail(function(jqXHR, textStatus){     	
+	        alert(textStatus);
+	    });
+	}
+	
+	function onClickList()
+	{
+		hideQuestionGroupEduView();
+		showQuestionGroupEduList();
+	}
+	
+	function onClickDelete()
+	{
+		if(confirm("해당 단체교육문의를 삭제하시겠습니까?")){
+			var reqObj = new Object();
+			
+		    reqObj.seq = viewData.seq;
+		    reqObj.word = gSearchWord;
+		    reqObj.option = gSearchOption;
+		    reqObj.pageIdx = gSearchPageIdx;
+		    
+		    var request = $.ajax({ url : /*[[@{/api/deleteQuestionGroupEdu}]]*/, type : "post", data : reqObj, dataType: "text"});
+		    
+		    request.done(function(data){makeList(data); hideQuestionGroupEduView(); showQuestionGroupEduList();});
+		    
+		    request.fail(function(jqXHR, textStatus){ alert(textStatus); });
+		}
+	}
+	
+	function onClickAnswer()
+	{
+		var reqObj = new Object();
+		
+	    reqObj.seq = viewData.seq;
+	    reqObj.word = gSearchWord;
+	    reqObj.option = gSearchOption;
+	    reqObj.pageIdx = gSearchPageIdx;
+	    
+	    var request = $.ajax({ url : /*[[@{/api/answerQuestionGroupEdu}]]*/, type : "post", data : reqObj, dataType: "text"});
+	    
+	    request.done(function(data){makeList(data); hideQuestionGroupEduView(); showQuestionGroupEduList();});
+	    
+	    request.fail(function(jqXHR, textStatus){ alert(textStatus); });
+		
+	}
+</script>
+	<h3>단체교육문의 글보기</h3>
+	<div class="table">
+		<table>
+			<caption>단체교육문의 글보기</caption>
+			<colgroup>
+				<col style="width:200px">
+				<col style="width:">
+			</colgroup>
+			<tbody>
+				<tr>
+					<th scope="row"><label>제목 </label></th>
+					<td><span id="viewBoxTitle" class="formElement"></span></td>
+				</tr>
+				<tr>
+					<th scope="row"><label>기업/기관명 </label></th>
+					<td><span id="viewBoxCompanyName" class="formElement"></span></td>
+				</tr>
+				<tr>
+					<th scope="row"><label>담당자 </label></th>
+					<td><span id="viewBoxCharder" class="formElement"></span></td>
+				</tr>
+
+				<tr>
+					<th scope="row"><label>연락처</label></th>
+					<td>
+						<span id="viewBoxMobile" class="formElement"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">이메일</th>
+					<td>
+						<span id="viewBoxEmail" class="formElement"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">작성일</th>
+					<td>
+						<span id="viewBoxRegDate" class="formElement"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">답변상태</th>
+					<td>
+						<span id="viewBoxState" class="formElement"></span>
+					</td>
+				</tr>
+				<tr>
+					<td id="viewBoxContent" colspan="2" scope="row" style="line-height:1.5;"></td>
+				</tr>                
+			</tbody>
+		</table>
+	</div>
+	<div class="btnWrap"> 
+		<span class="btnBasic light"><button id="viewBoxbtnList" type="button" onclick="onClickList();">목록</button></span> 
+		<span class="btnBasic light"><button id="viewBoxbtnDel" type="button" onclick="onClickDelete();">삭제</button></span> 
+		<span class="btnBasic blue"><button id="viewBoxbtnAnswer" type="button" onclick="onClickAnswer();">확인</button></span>             
+	</div>
+</div>
+</body>
+</html>

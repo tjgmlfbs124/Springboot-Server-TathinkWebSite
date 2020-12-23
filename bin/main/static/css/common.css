@@ -1,0 +1,189 @@
+@charset "utf-8";
+
+/* Noto Sans CJK Kr 웹폰트 */
+@font-face {
+	font-family: 'Noto Bold';
+	font-weight: normal;
+	src: url(../font/notokr-bold.eot);
+	src: url(../font/notokr-bold.eot?#iefix) format('embedded-opentype'),
+		url(../font/notokr-bold.woff) format('woff'),
+		url(../font/notokr-bold.ttf) format('truetype'),
+		url(../font/notokr-bold.otf) format('truetype');
+}
+@font-face {
+	font-family: 'Noto Medium';
+	font-weight: normal;
+	src: url(../font/notokr-medium.eot);
+	src: url(../font/notokr-medium.eot?#iefix) format('embedded-opentype'),
+		url(../font/notokr-medium.woff) format('woff'),
+		url(../font/notokr-medium.ttf) format('truetype'),
+		url(../font/notokr-medium.otf) format('truetype');
+}
+@font-face {
+	font-family: 'Noto Regular';
+	font-weight: normal;
+	src: url(../font/notokr-regular.eot);
+	src: url(../font/notokr-regular.eot?#iefix) format('embedded-opentype'),
+		url(../font/notokr-regular.woff) format('woff'),
+		url(../font/notokr-regular.ttf) format('truetype'),
+		url(../font/notokr-regular.otf) format('truetype');
+}
+@font-face {
+	font-family: 'Noto Demilight';
+	font-weight: normal;
+	src: url(../font/notokr-demilight.eot);
+	src: url(../font/notokr-demilight.eot?#iefix) format('embedded-opentype'),
+		url(../font/notokr-demilight.woff) format('woff'),
+		url(../font/notokr-demilight.ttf) format('truetype'),
+		url(../font/notokr-demilight.otf) format('truetype');
+}
+@font-face {
+	font-family: 'Noto Light';
+	font-weight: normal;
+	src: url(../font/notokr-light.eot);
+	src: url(../font/notokr-light.eot?#iefix) format('embedded-opentype'),
+		url(../font/notokr-light.woff) format('woff'),
+		url(../font/notokr-light.ttf) format('truetype'),
+		url(../font/notokr-light.otf) format('truetype');
+}
+@font-face {
+	font-family: 'Noto Thin';
+	font-weight: normal;
+	src: url(../font/notokr-thin.eot);
+	src: url(../font/notokr-thin.eot?#iefix) format('embedded-opentype'),
+		url(../font/notokr-thin.woff) format('woff'),
+		url(../font/notokr-thin.ttf) format('truetype'),
+		url(../font/notokr-thin.otf) format('truetype');
+}
+
+
+
+/* Type Selector */
+* {-webkit-text-size-adjust:none;}
+html,body {width:100%; height:100%; margin:0; padding:0; font-size:100%;}
+div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, textarea, p, blockquote, th, td {margin:0; padding:0;}
+body {letter-spacing:-0.5px; font-weight:normal; font-family:dotum, '돋움', sans-serif; font-size:1em; color:#555;}
+button, input[type=submit], input[type=reset], input[type=button] {overflow:visible; cursor:pointer;}
+input, select, textarea, button {font-family:dotum, '돋움', sans-serif; font-size:100%; border-radius:0; -webkit-appearance:none; -moz-appearance:none; appearance:none;}
+select::-ms-expand {display:none;}
+input {margin:0; padding:0; border:0;}
+li {list-style:none;}
+img, fieldset {border:none; vertical-align:top;}
+hr {display:none;}
+legend, caption {height:0; overflow:hidden;}
+em, address, cite {font-style:normal;}
+a, button {
+	-webkit-transition: background-color .25s ease-out, color .25s ease-out;
+	-moz-transition: background-color .25s ease-out, color .25s ease-out;
+	-ms-transition: background-color .25s ease-out, color .25s ease-out;
+	transition: background-color .25s ease-out, color .25s ease-out;
+}
+button {margin:0; padding:0; border:0;}
+a:link {text-decoration:none;color:#555;}
+a:visited {text-decoration:none;color:#555;}
+a:hover, a:focus {text-decoration:underline;color:#555;}
+a:active {text-decoration:none;color:#555;}
+
+
+/* Layout */
+body {width:100%; height:100%;}
+#wrap {}
+#header {z-index:51; position:relative; width:100%; height:136x; margin:0 0 92px 0; background:#ffc700}
+#container {width:100%; height:auto;}
+#content {width:100%; height:auto;}
+#footer {border-top:1px solid #d2d2d2; width:100%; min-width:1080px; padding-bottom:15px}
+
+/* Header */
+#util {position:relative; width:1080px; height:46px; margin:0 auto; text-align:right;}
+#util span.slogan {position:absolute; left:0; top:7px;}
+#util ul {position:absolute; right:0; top:0; height:35px; padding:11px 0 0 20px;}
+#util ul li {display:inline-block; *display:inline; *zoom:1; vertical-align:top; padding-right:12px;}
+#util ul li:last-child {padding-right:0;}
+#util ul li.joinps{ font-family:dotum, '돋움', sans-serif; color:#333;font-size:14px;line-height:1.8}
+#util ul li a {padding-left:13px; background-image:url(../images/ui/common/icon_util.png);background-repeat:no-repeat; background-position:0 50%; line-height:1.5; font-family:Noto Regular; font-weight:normal; font-size:15px; color:#3a300c;}
+#util ul li a.ft{ background-image:none}
+#util ul li a:hover {text-decoration:none;}
+#util ul li.sns{padding-right:0; padding-left:5px}
+#util ul li.sns a {background-image:none;padding-left:0}
+
+
+/* GNB */
+.gnbWrap {
+	z-index: 51;
+	position: absolute;
+	top: 46px;
+	width: 100%;
+	min-width: 1080px;
+	height: 91px;
+	background: url(../images/ui/common/gnb_bg.png) repeat-x 0 0;
+	border-top: 1px solid #282828;
+}
+.gnbWrap .inner {position:relative; width:1080px; margin:0 auto;}
+#header h1 {position:absolute; top:9px; left:19px; width:139px; height:75px;}
+#header h1 a {display:block; width:139px; height:75px; text-indent:-999em; background:url(../images/ui/common/logo.png) 0 0 no-repeat}
+
+#gnb {*zoom:1;}
+#gnb:after {content:""; display:block; clear:both;}
+#gnb a {text-decoration:none;}
+
+#gnb > ul {float:right; margin-right:-45px; *zoom:1;}
+#gnb > ul:after {content:""; display:block; clear:both;}
+#gnb > ul > li {float:left; vertical-align:top;}
+#gnb > ul > li > span {display:block; padding:0 45px; line-height:0; font-size:0;}
+#gnb > ul > li > span > a {display:inline-block; *display:inline; *zoom:1; padding-right:2px; line-height:91px; letter-spacing:-1px; font-family:Noto Medium; font-weight:normal; font-size:20px; color:#fff;}
+#gnb > ul > li.on > span > a { color:#ffc700;} 
+#gnb > ul > li > span > a:hover,
+#gnb > ul > li > span > a:focus {color:#ffc700;} 
+#gnb ul li ul {margin-left:45px; padding-top:20px;}
+#gnb ul li.last ul {margin-left:45px;}
+#gnb ul li ul li a {display:block; padding:5px 0; letter-spacing:-0.5px; font-family:Noto Regular; font-weight:normal; font-size:16px; color:#fff;}
+#gnb ul li ul li a:hover,
+#gnb ul li ul li a:focus {color:#ffc700;}
+
+/* FOOTER */
+#footer .menu {position:relative; width:100%; min-width: 1080px; margin:0 auto; padding:12px 0 13px; text-align:center;border-bottom:1px solid #d2d2d2; }
+#footer .menu > ul {*zoom:1; width:605px; margin:0 auto}
+#footer .menu > ul:after {content:""; display:block; clear:both;}
+#footer .menu > ul > li { float:left}
+#footer .menu > ul > li a {padding:0 30px;line-height:1.5; font-family:Noto Medium; font-weight:normal; font-size:16px; color:#464646;}
+#footer .menu > ul > li a:hover,
+#footer .menu > ul > li a:focus{ text-decoration:none}
+#footer .line01 {width:800px; margin:0 auto; padding:15px 0 10px; text-align:center; }
+#footer .line01 span {padding:0 20px;line-height:1.5; font-family:Noto Regular; font-weight:normal; font-size:15px; color:#464646; letter-spacing:0}
+#footer .line02 {width:1000px; margin:0 auto; padding-bottom:10px; text-align:center;line-height:1.5; font-family:Noto Regular; font-weight:normal; font-size:14px; color:#969696;}
+#footer .line02 span{padding:0 15px; background:url(../images/ui/common/footer_line02bg.png) 0 50% no-repeat}
+#footer .line03 {width:1000px; margin:0 auto; text-align:center;line-height:1.5; font-family:Noto Regular; font-weight:normal; font-size:14px; color:#969696;}
+
+
+
+/*폰트강조*/
+span.blue {color:#00aabe; font-weight:bold}
+span.red {color:#d80000; font-weight:bold}
+
+
+/* form */
+select {margin-top:-2px; padding:6px; border:1px solid #dadada; background:url(../images/ui/common/bg_select_arrow.png) no-repeat 100% 14px #fff; vertical-align:middle; font-family:dotum, '돋움', sans-serif; font-weight:normal; font-size:14px; color:#707070; height:35px}
+select {margin-top:-2px\0IE8;}
+
+
+
+input[type="checkbox"] {width:20px; height:20px; background:url(../images/ui/common/bg_checkbox_off.gif) no-repeat 0 0;}
+input[type="checkbox"]:checked {background-image:url(../images/ui/common/bg_checkbox_on.gif); }
+input[type="radio"] {width:20px; height:20px; background:url(../images/ui/common/bg_radio_off.gif) no-repeat 0 0;}
+input[type="radio"]:checked {background-image:url(../images/ui/common/bg_radio_on.gif);}
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"] {height:33px; padding-left:10px; border:1px solid #dadada; background-color:#fff; line-height:33px; font-weight:normal; font-size:14px; color:#666;font-family:dotum, '돋움', sans-serif;}
+input[type="text"].large,
+input[type="password"].large,
+input[type="email"].large,
+input[type="number"].large {height:38px; line-height:38px;}
+
+input[type="file"]{padding-left:10px; border:1px solid #dadada; background-color:#fafafa; line-height:33px; font-weight:normal; font-size:14px; color:#707070;}
+
+textarea {padding:15px; border:1px solid #e5e5e5;font-size:14px; font-family:dotum, '돋움', sans-serif; line-height:1.5}
+
+/*margin*/
+.mt5{margin-top:5px !important}
+.mt35{margin-top:35px !important}

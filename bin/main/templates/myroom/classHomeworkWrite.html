@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="writeHomeworkBox" style="display:none;">
+<script th:inline="javascript">
+	var fileHomeworkDelete = "";
+	var fileHomeworkNum = 0;
+	var writeHomeworkBox = document.getElementById("writeHomeworkBox");
+	
+	function hideHomeworkWrite()
+	{
+		writeHomeworkBox.style.display="none";
+		removeMyEditer();		
+	}
+	
+	function showHomeworkWrite(seq, title, listAttFiles, content, applyDate, processDate)
+	{
+		var writeHomeworkBoxSeq = document.getElementById("writeHomeworkBoxSeq");
+		var writeHomeworkBoxApplyDate = document.getElementById("writeHomeworkBoxApplyDate");
+		var writeHomeworkBoxProcessDate = document.getElementById("writeHomeworkBoxProcessDate");
+		
+		var writeHomeworkBoxTitle = document.getElementById("writeHomeworkBoxTitle");
+		var writeHomeworkBoxDelFiles = document.getElementById("writeHomeworkBoxDelFiles");
+		var writeHomeworkBoxAttachedFileBox = document.getElementById("writeHomeworkBoxAttachedFileBox");
+		
+		var classSeq = document.getElementById("classHomeworkSeq");
+		
+		createMyEditer("writeHomeworkBoxContent", "writeHomeworkBoxConfirm", "writeHomeworkBoxForm", content, /*[[@{/smartEditor/SmartEditor2Skin}]]*/);
+		
+		writeHomeworkBoxSeq.value = seq;
+		writeHomeworkBoxTitle.value = title;
+		writeHomeworkBoxApplyDate.value = applyDate;
+		writeHomeworkBoxProcessDate.value = processDate;
+		
+		classSeq.value = /*[[${class.seq}]]*/;
+		
+		if(listAttFiles != null)
+			makewriteHomeworkBoxAttachedFileList(writeHomeworkBoxAttachedFileBox ,listAttFiles);
+		
+		writeHomeworkBox.style.display="block";
+		location.href = "#writeHomeworkBox";
+	}
+	
+	function makewriteHomeworkBoxAttachedFileList(writeHomeworkBoxAttachedFileBox, listAttachedFiles)
+	{
+		writeHomeworkBoxAttachedFileBox.innerHTML = "";
+		
+		for(i = 0; i < listAttachedFiles.length; i ++)
+		{
+			var div = document.createElement("div");
+			var span = document.createElement("span");
+			var a = document.createElement("a");
+			var img = document.createElement("img");
+			
+			img.src=/*[[@{/images/ui/common/btn_del.png}]]*/;			
+			removeAttachedHomeworkFileSetClickListener(a,listAttachedFiles[i]);
+			
+			var fileName = listAttachedFiles[i];
+			var arraySplitUrl = fileName.split("/");
+			var nArLength = arraySplitUrl.length;
+			var arFileName = arraySplitUrl[nArLength-1];
+			
+			span.setAttribute("class", "addfile");
+			span.textContent = arFileName;
+			
+			a.appendChild(img);
+			span.appendChild(a);
+			div.appendChild(span);
+			writeHomeworkBoxAttachedFileBox.appendChild(div);
+		}
+	}
+	
+	function removeAttachedHomeworkFileSetClickListener(a, fileName)
+	{
+		a.onclick=function()
+		{
+			onClickRemoveHomeworkAttachedFile(a,fileName);
+		};
+	}
+	
+	function onClickRemoveHomeworkAttachedFile(obj, fileName)
+	{
+		document.getElementById('writeHomeworkBoxAttachedFileBox').removeChild(obj.parentNode.parentNode);
+		if(fileHomeworkNum > 0)
+			fileHomeworkDelete += ";";
+		fileHomeworkDelete += fileName;
+		fileHomeworkNum++;
+		document.getElementById('writeHomeworkBoxDelFiles').value = fileHomeworkDelete;
+	}
+
+	function onClickRemoveHomeworkFileItem(obj)
+	{
+		document.getElementById('writeHomeworkBoxFileItemBox').removeChild(obj.parentNode);
+	}
+
+	function onClickAttachHomeworkFileItem()
+	{
+    	var div = document.createElement('div');
+    	div.innerHTML = document.getElementById('writeHomeworkBoxPreSet').innerHTML;
+    	document.getElementById('writeHomeworkBoxFileItemBox').appendChild(div);
+    	var inputName = div.getElementsByTagName('input');
+    	inputName[0].setAttribute("id", "writeHomeworkBoxFileItem");
+    	inputName[0].setAttribute("name", "attachFiles");
+	}
+	
+	function onClickHomeworkWriteCancle()
+	{
+		if(isHideHomeworkListBox())
+			searchHomework(gSearchHomeworkOption, gSearchHomeworkWord, gSearchHomeworkPageIdx);
+	}
+	
+</script>
+	<h4>과제등록</h4>
+	<form name="writeHomeworkBoxForm" id="writeHomeworkBoxForm" th:action="@{/myroom/homeworkWriteSubmit}" onsubmit="return true;" method="post" enctype="multipart/form-data">
+		<input type="hidden" id="classHomeworkSeq" name="classSeq">        
+		<input type="hidden" id="writeHomeworkBoxSeq" name="seq">
+		<input type="hidden" id="writeHomeworkBoxDelFiles" name="delFiles">
+		<div class="table">
+			<table>
+				<caption>과제등록 서식</caption>
+				<colgroup>
+					<col style="width:200px">
+					<col style="width:">
+				</colgroup>
+				<tbody>
+					<tr>
+						<th scope="row"><label for="title">제목</label></th>
+						<td>
+							<span class="formElement">
+								<input type="text" id="writeHomeworkBoxTitle" name="title" placeholder="제목을 입력하세요." style="width:500px;" maxlength="" >
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="TA_addfile">파일첨부</label>
+						</th>
+						<td>                     
+							<div id="writeHomeworkBoxPreSet" style="display:none">
+								<input type="file" id="file" name="file" style="right:0; width:510px; height:35px; margin:0; padding:0; border:0; overflow:hidden;">
+								<a id="" href="javascript:{}" onclick="onClickRemoveHomeworkFileItem(this);"><img th:src="@{/images/ui/common/btn_del.png}"/></a>
+							</div>
+							<div id="writeHomeworkBoxFileItemBox"></div>
+							<span class="btnBasic blue">
+								<button type="button" onclick="onClickAttachHomeworkFileItem();">추가</button>
+							</span>
+							<div id="writeHomeworkBoxAttachedFileBox"></div>
+							<p class="desc">5MB 이하의 파일만 업로드 가능합니다.</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="title">제출기간</label></th>
+						<td>
+							<span class="formElement">
+								<input type="text" id="writeHomeworkBoxApplyDate" name="applyDate" placeholder="ex)2019.03.01~2019.03.31" style="width:500px;" maxlength="" >
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="title">성적처리기간</label></th>
+						<td>
+							<span class="formElement">
+								<input type="text" id="writeHomeworkBoxProcessDate" name="processDate" placeholder="ex)2019.04.01~2019.04.30" style="width:500px;" maxlength="" >
+							</span>
+						</td>
+					</tr>										
+					<tr>
+						<td colspan="2" scope="row">
+							<textarea name="content" id="writeHomeworkBoxContent" style="width: 700px; height: 400px;"></textarea>
+						</td>
+					</tr>                
+				</tbody>
+			</table>
+		</div>
+		<div class="btnWrap"> 
+			<span class="btnLarge light"><a href="javascript:{}" onclick="onClickHomeworkWriteCancle();">취소</a></span> 
+			<span class="btnLarge"><button id="writeHomeworkBoxConfirm" type="button">확인</button></span>             
+		</div>
+	</form>
+</div>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}" />
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}" />
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/js/core.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/sha256.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<!--[if lt IE 9]>
+	<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+<![endif]-->
+</head>
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+function onLogInSubmit(){
+	var pw = document.getElementById('TA_passwd').value;
+	document.getElementById('TA_passwd').value ="";
+	document.getElementById('password').value = pw;
+	return true;
+}
+
+</script>
+<body>
+	<div id="wrap"> 
+  		<div th:replace="header :: contents"></div>
+  		<div id="container"> 
+    		<div class="subhead">
+      			<div class="subtitle">
+        			<h2>T. A. Think</h2>
+        			<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think</span>
+        			<div class="place"><span><a href="javascript:{}" onclick="alert('서비스 준비중입니다.');">Home</a></span> > 로그인</div>
+      			</div>
+    		</div>
+    		<div id="contents_container"> 
+      			<div id="lnb" class="lnb">
+      				<div th:replace="join/joinLnb :: contents"></div>
+      			</div>
+      			<div class="subcontents" style="display:">
+        			<div class="loginCenter">
+          				<div class="intro">
+            				<div class="inner"> 
+            					<strong>T.A. Think에 오신 것을 환영합니다.</strong>
+              					<p>회원가입 후 로그인하시면 다양한 강의를 신청·이용하실 수 있습니다.</p>
+            				</div>
+          				</div>          
+          				<div class="loginForm">
+            				<span class="red">
+            					<p th:if="${error=='true'}">로그인에 실패하였습니다. 아이디와 비밀번호를 확인해 주세요.</p>
+            				</span>                       
+            				<form id="frmLogin" th:action="@{/join/login}" onsubmit="return onLogInSubmit();" method="POST">
+            					<input type="hidden" id="password" name="password">
+              					<table>
+                					<caption>아이디, 비밀번호를 입력하는 로그인 서식</caption>
+                					<tbody>
+                  						<tr>
+                    						<th scope="row"><label for="TA_Id">아이디</label></th>
+                    						<td><input type="text" id="TA_Id" name="username" placeholder="아이디를 입력해 주세요." class="large" style="width:322px"/></td>
+                  						</tr>
+                  						<tr>
+                    						<th scope="row"><label for="TA_passwd">비밀번호</label></th>
+                    						<td><input type="password" id="TA_passwd" name="TA_passwd" placeholder="비밀번호를 입력해 주세요." class="large" style="width:322px"/></td>
+                  						</tr>
+                  						<tr>
+                   	 						<td colspan="2">
+                    							<span class="formElement" style="position:relative">
+                      								<input type="checkbox" id="idSaveCheck" name="idSaveCheck"/>
+                      								<em style="display:inline-block; position:absolute; top:-8px; width:200px;font-family:Noto Regular">
+                      									<label for="">아이디 기억하기</label>
+                      								</em> 
+                      							</span>
+                     						</td>
+                  						</tr>
+                					</tbody>
+              					</table>
+              					<button id="" value="Login" type="submit">로그인</button>
+            				</form>
+          				</div>
+          				<ul class="loginGuide">
+							<li>T.A. Think회원이 아니신가요?<span class="btnBasic"><a th:href="@{/join/reg}">회원가입</a></span></li>
+							<li>아이디/비밀번호가 기억나지 않으시나요?<span class="btnBasic"><a th:href="@{/join/findIdPwd}">아이디/비밀번호 찾기</a></span></li>
+						</ul>
+        			</div>
+      			</div>
+    		</div>
+  		</div>
+  		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

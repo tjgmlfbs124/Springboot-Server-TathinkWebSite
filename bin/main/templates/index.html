@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.bannerSlider-1.0__.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(function () {
+	  $('#tc_slice').scrollbox({
+	    direction: 'h',
+	    distance: 250
+	  });
+	  $('#tc_slice-backward').click(function () {
+	    $('#tc_slice').trigger('backward');
+	  });
+	  $('#tc_slice-forward').click(function () {
+	    $('#tc_slice').trigger('forward');
+	  });	  	 
+});
+</script>
+
+</head>
+
+<body>
+<div id="wrap"> 
+	<div th:replace="header :: contents"></div>
+	<div id="container">
+	    <div id="main_event_block_w">
+			<div class="main_event_list" style="left: 0px;">
+				<ul>
+					<li th:each="eventData, i : ${listEvent}" th:style="'background: url(' + @{${eventData.imgPath}} + ')  no-repeat center 0px; z-index: 0; right: '+ ${i.index==0?'0px':'-100%'}+';'">
+						<a th:href="@{${eventData.href}}"></a>
+					</li>
+				</ul>
+			</div>
+			<p class="btn_l_wrap"><a title="이전 이벤트" class="main_btn_prev" href="javascript:void(0);"><span>이전 이벤트</span></a></p>
+			<p class="btn_r_wrap"><a title="다음 이벤트" class="main_btn_next" href="javascript:void(0);"><span>다음 이벤트</span></a></p>
+			<div class="main_event_num" style="text-align:center">
+				<div class="num_list"><ul></ul></div>
+			</div>
+		</div>
+		<div id="subcontainer"> 
+			<div id="course_container" class="tasection_top">
+        		<h2>강의소개 <span>T.A Think의 코딩교육은 논리 수학적으로 깊이 생각하는 힘을 길러줍니다. </span></h2> 
+        		<ul>
+            		<li th:each="courseData : ${listCourse}">
+            			<a th:href="@{${'/course?courseSeq='+courseData.seq}}">
+            				<img th:src="@{${courseData.smallImgPath}}" width='350' height='111' alt=''></img>
+            			</a>
+            		</li>
+          		</ul>
+      		</div>
+      		<div class="tasection">
+        		<h2>교수진소개 <span>T.A Think의 강사진은 컴퓨터공학과와 모바일 공학과 전임교수 4명과 삼성출신 연구진으로 이루어져 있습니다.</span></h2>
+       			<div class="tc_slice">
+        			<div id="tc_slice" class="scroll-img">
+          				<ul>
+            				<li th:each="teacherData : ${listTeacher}"><a th:href="@{${'/teacher/listTeacher?selectId='+teacherData.username}}"><img th:src="@{${teacherData.imgPath}}" width="250" height="309" alt=""/></a></li>
+          				</ul>
+        			</div>
+        			<a class="prevbtn" id="tc_slice-backward">이전</a> <a class="nextbtn" id="tc_slice-forward">다음</a> 
+         		</div>
+         	</div>
+         	<div class="tasection"><img th:src="@{/images/ui/main/main_about.png}" alt="T.A Think 소개 배너"/></div>
+      		<div class="tasection">
+        		<div class="tahalf" style="margin-right:70px">
+          			<h2>공지사항 <span>T.A Think 에서 알려드립니다.</span></h2>
+          			<ul>
+            			<li th:each=" noticeData : ${listNotice}">
+              				<a class="homeboard" th:href="@{${'/board/notice?seq='+noticeData.seq}}" th:utext="${noticeData.title}"></a>
+              				<span class="new" th:if="${noticeData.regDate.toLocalDate() == currentDate.toLocalDate()}">
+                				<img th:src="@{/images/ui/common/icon_new.gif}" width="12" height="11" alt=""/>
+              				</span>
+              				<span>[[${#strings.substring(noticeData.regDate,0,10)}]]</span>
+            			</li>
+          			</ul>
+          			<a th:href="@{/board/notice}" class="readmore">더보기</a> 
+        		</div>
+        		<div class="tahalf">
+          			<h2>Q &amp; A <span>궁금한 사항에대해 성심껏 답변해 드리겠습니다.</span></h2>
+          			<ul>
+            			<li th:each=" qnaData : ${listQna}">         				
+              				<a th:href="@{${'board/qna?seq='+qnaData.seq}}" class="homeboard" th:utext="${qnaData.qTitle}"></a>
+              				<span class="new" th:if="${qnaData.qRegDate.toLocalDate() == currentDate.toLocalDate()}">
+                				<img th:src="@{/images/ui/common/icon_new.gif}" width="12" height="11" alt=""/>
+              				</span>
+              				<span>[[${#strings.substring(qnaData.qRegDate,0,10)}]]</span>
+            			</li>
+          			</ul>
+          			<a th:href="@{/board/qna}" class="readmore">더보기</a> 
+          		</div>
+      		</div>
+         	<div class="tasection">
+		        <div class="tah4"><img th:src="@{/images/ui/main/banner_tel.gif}" width="270" height="169" alt="교육문의"/></div>
+		        <div class="tah4">
+					<ul>
+						<li><a th:href="@{/tathinkInfo/intro}"><img th:src="@{/images/ui/main/banner_link01.gif}" width="270" height="56" alt="미래직업변화와 코딩교육"/></a></li>
+						<li><a th:href="@{/board/faq}"><img th:src="@{/images/ui/main/banner_link02.gif}" width="270" height="56" alt="FAQ"/></a></li>
+						<li><a th:href="@{/tathinkInfo/location}"><img th:src="@{/images/ui/main/banner_link03.gif}" width="270" height="57" alt="교육센터 오시는 길"/></a></li>
+					</ul>
+        		</div>
+        		<div class="tah4"><a th:href="@{/board/questionGroupEdu}"><img th:src="@{/images/ui/main/banner_edu.gif}" width="270" height="169" alt="단체교육문의"/></a></div>
+        		<div class="tah4"><a th:href="@{/teacher/recruitTeacher}"><img th:src="@{/images/ui/main/banner_recruit.gif}" width="270" height="169" alt="선생님 모집"/></a></div>
+      		</div>
+		</div>
+	</div>
+	<div th:replace="footer :: contents"></div>
+</div>
+</body>
+</html>

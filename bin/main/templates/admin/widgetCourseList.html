@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+		<div th:fragment="contents" class="modal" id="selectCourseDlg" style="display:none">
+			<div id="listBox" class="modal-content">
+				<h3>과목리스트</h3>
+				<div class="tableTop">
+					<p id="totalCourseCnt" class="count"></p>
+					<div class="searchTable"> 
+						<span class="formElement">
+							<select id="searchCourseType" style="width:105px;">
+								<option value="NAME">과목명</option>
+								<option value="CODE">과목코드</option>
+							</select>
+						</span>
+						<div class="search">
+							<input type="text" id="searchCourseValue">
+							<button type="submit" id="searchAction" name="searchAction" onclick="onClickCourseSearch();">검색하기</button>
+						</div>
+					</div>							
+				</div> 											 
+				<div class="tbList">
+					<table border="1" cellspacing="0" summary="과목리스트">
+						<caption>교보재리스트</caption>
+						<colgroup>
+							<col width="140px">
+							<col width="*">
+						</colgroup>
+						<thead>
+							<tr>
+								<th scope="col">과목코드</th>
+								<th scope="col">과목명</th>
+							</tr>
+						</thead>
+						<tbody id="courseInfoListContainer"></tbody>
+					</table>
+				</div> 
+				<div id = "courseEmpty" style="text-align:center;">정보가 없습니다.</div>	
+				<div id="coursepaginate" class="paginate"></div>
+			</div>
+		</div>	
+</body>
+</html>

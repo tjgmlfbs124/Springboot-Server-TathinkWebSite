@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+});
+
+</script>
+</head>
+
+<body>
+	<div id="wrap"> 
+		<div th:replace="header :: contents"></div>
+		<div id="container"> 
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>교수진 소개</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think!</span>
+					<div class="place"><span><a th:href="@{/}">Home</a></span> > T. A. Think? > T. A. Think 소개</div>
+				</div>
+			</div>
+			<div id="contents_container"> 
+				<div class="lnb">
+					<div th:replace="tathinkInfo/tathinkInfoLnb :: contents"></div>
+				</div>
+      			<div class="subcontents">
+					<h1 class="intro"><span>"창의논리적 컴퓨팅 사고 전문 교육"</span><br/>(주)T.A.Think 교육센터 </h1>
+					<div class="intro">(주)T. A. Think 교육센터에 오신 것을 환영합니다.<br/>(주)T. A. Think은 대학교 전임교수들이 모여 창업한 연구소기업으로서, 올바른 코딩교육을 위한 온∙오프라인 교육을 제공하여 미래 시대에 적합한 인재 양성을 목표로 합니다.<br/>(주)T. A. Think의 코딩교육은 일선학교나 학원의 기초 코딩/로봇 교육의 수준을 넘어서서, 선진국 수준과 동일한 <b>논리 수학적으로 깊이 생각하는 힘</b>을 길러줍니다. </div>
+					<h2 class="intro">T. A. Think는 3가지 힘을 길러줍니다.</h2>
+					<div class="introimg"><img th:src="@{/images/sub/tathink_img01.png}" width="682" height="186" alt=""/></div>
+					<h2 class="intro">수학학원과 코딩교육의 창의-논리력 차이점 </h2>
+					<div class="intro">현재시대에서 수학은 갈수록 중요해지고 있습니다. 정확히 말하면 수학적 사고가 중요합니다. 수학을 제대로 배우고 열심히 공부하면 수학적 사고력 역시 높아집니다. 하지만 그것은 선진국식 수학교육에 좀 더 적합하고 한국식 입시수학은 성격이 좀 다릅니다. 한국식 수학교육에서 95%의 아이들은 공식에 따라 문제 해결책을 암기하는 <b>암기식</b>으로 흘러갑니다. 사고를 일찍 깨친 5%의 아이들만이 올바른 수학적 사고를 한다는 연구보고가 있습니다. 그럼 이런 95% 아이들은 그냥 손 놓고 미래를 맞이해야 하는 걸까요?<br/><br/>이런 한국의 암기식 수학교육에 대한 보완/해결책으로 제시된 것이 바로 <b>논리 수학적 컴퓨팅 사고 교육</b>입니다. 어려운 문제일수록 고도의 논리수학적 힘, 깊이 생각하는 힘이 필요합니다.<br/> <b>컴퓨팅 사고</b> 훈련이 반복되면 마치 레고블럭을 마음대로 쌓았다가 허물었다가 하듯이 자신의 머릿속에서 논리 수학적인 해결과정을 자유롭게 창조해낼 수 있게 됩니다. 사실 이런 문제풀이 훈련이 자연스러운 것입니다. 왜냐하면 사람은 논리적으로 생각하는 방법은 모두 다르니까요.<br/><b>"서로 다른 특성을 가진 개개인을 똑같은 문제의 틀 안에 가둬두지 않고, 스무 살이 넘어서 세상에 혼자 섰을 때 생존 할 수 있는 힘을 길러주는 교육"</b> 이것이 인공지능 시대를 대비하는 선진국식 해결책입니다. 선진국에서는 이런 힘을 <b>사람이 가장 잘하는 일</b>에서 찾습니다. 그것이 무엇일까요? <br/>사람이 가장 잘하는 일은 바로 <b>"논리적으로 새로운 것을 창조하는 것"</b> 입니다. 미국,영국,독일,프랑스,핀란드 등 대부분의 선진국에서 코딩교육을 의무화 하고 있는 이유이기도 하죠. 이제 십여년이 지나면 전 세계에는 두 종류의 20대가 있게 됩니다. 암기된 논리력에 익숙한 20대와 논리력과 호기심을 가지고 창조할 줄 아는 업그레이드된 20대입니다. </div>
+					<h2 class="intro">코딩교육의 3가지 오해</h2>
+					<div class="introimg">
+						<img th:src="@{/images/sub/tathink_img02.png}" alt=""/>
+					</div>
+					<h2 class="intro">(주)T.A.Think 만의 차별점</h2>
+					<div class="introimg">
+						<img th:src="@{/images/sub/tathink_img03.png}" alt=""/>
+					</div>
+					<div class="intro">저희 ㈜T. A. Think은 경운대학교 컴퓨터공학과와 모바일 공학과 <b>전임교수 4명과 삼성출신 연구진이 창업한 연구소기업</b>으로 컴퓨팅사고 교육과 지능형 로봇을 연구개발하고 있습니다. 수학 알고리즘, 임베디드, 인공지능, 의학정보학 등을 전공한 교수님들이 직접 교육을 주도하며, 컴퓨팅 사고 교육을 위한 SW와 HW 컨텐츠를 자체 개발할 수 있는 국내에서 몇 안되는 원스탑 R&D전문 기업입니다. (주)T. A. Think의 각 교육과정은 우송대 교수인 류숙희교수(서울대 교육학 박사)의 연구소 기업인 (주)다중지능연구소와 협업을 통해 검증하였습니다.</div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

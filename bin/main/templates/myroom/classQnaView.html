@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="viewQnABox" style="display:none">
+<script th:inline="javascript">
+	var viewQnABox = document.getElementById("viewQnABox");
+	
+	function hideQnaView()
+	{
+		viewQnABox.style.display="none";
+		location.href = "#contents_container";
+	}
+	
+	function showQnaView(seq)
+	{
+		var reqObj = new Object();
+		var pwd = null;
+
+	    reqObj.seq = seq;
+	    
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/viewClassQna}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.done(function (data)
+	    {      	
+	    	var responseData = JSON.parse(data);
+	    	
+	      	if(!responseData)
+	      	{
+	         	alert("세션이 만료되어 재접속이 필요합니다.");
+	         	return false;
+	      	}    
+	      	
+	    	if(responseData.error != null)
+	    	{
+	    		alert(responseData.error);
+	    		return false;
+	    	}
+	    	
+	    	viewQnABox.style.display = "block";
+	    	location.href = "#viewQnABox";
+	    	
+	    	var viewQnABoxTitle = document.getElementById("viewQnABoxTitle");
+	    	var viewQnABoxQRegDate = document.getElementById("viewQnABoxQRegDate");
+	    	var viweBoxQWriter = document.getElementById("viweBoxQWriter");
+	    	var viewQnABoxQuestion = document.getElementById("viewQnABoxQuestion");
+	    	var viewQnABoxAnswer = document.getElementById("viewQnABoxAnswer");
+	    	var atitleWriter = document.getElementById("atitleWriter");
+	    	var viewQnABoxAnswerTable = document.getElementById("viewQnABoxAnswerTable");
+	    	var viewQnABoxbtnDel = document.getElementById("viewQnABoxbtnDel");
+	    	var viewQnABoxbtnAnswer = document.getElementById("viewQnABoxbtnAnswer");
+	    	var viewQnABoxbtnMod = document.getElementById("viewQnABoxbtnMod");
+	    	var viewQnABoxbtnList = document.getElementById("viewQnABoxbtnList");
+	    	
+	    	viewQnABoxTitle.textContent = responseData.qTitle; 
+	    	viewQnABoxTitle.innerHTML = viewQnABoxTitle.innerHTML.replace(/\n\r?/g, '<br />');
+	    	
+		  	if(responseData.bSec){
+				var fileImage = document.createElement("img");
+		  		fileImage.src = /*[[@{/images/ui/common/board_lock.png}]]*/;
+		  		fileImage.width = 20;
+		  		fileImage.height = 20;
+		  		viewQnABoxTitle.appendChild(fileImage);	
+		  	}
+	    	
+	    	viewQnABoxQRegDate.textContent = convertDateTimeString(responseData.qRegDate);
+	    	viweBoxQWriter.textContent = responseData.qWriter;
+	    	viweBoxQWriter.innerHTML = viweBoxQWriter.innerHTML.replace(/\n\r?/g, '<br />');
+	    	viewQnABoxQuestion.innerHTML = responseData.question;
+	    	atitleWriter.textContent = responseData.aWriter;
+	    	viewQnABoxAnswer.innerHTML = responseData.answer;
+	      	
+	      	if(responseData.answer == null)
+      		{
+	      		viewQnABoxAnswerTable.style.display = "none";
+	      		
+	      		if(bManager)
+	      		{
+	      			viewQnABoxbtnAnswer.style.display = "inline";
+	      			viewQnABoxbtnDel.style.display = "inline";
+	      			viewQnABoxbtnMod.style.display = "none";
+	      		}
+	      		else
+      			{
+	      			viewQnABoxbtnAnswer.style.display = "none";
+	      			
+	      			if(responseData.bMine == true)
+	      			{
+	      				viewQnABoxbtnDel.style.display = "inline";
+	      				viewQnABoxbtnMod.style.display = "inline";
+	      			}
+	      			else
+      				{
+	      				viewQnABoxbtnDel.style.display = "none";
+	      				viewQnABoxbtnMod.style.display = "none";
+      				}
+      			}
+      		}
+	      	else
+      		{
+	      		viewQnABoxAnswerTable.style.display = "inline-table";
+	      		
+	      		viewQnABoxbtnAnswer.style.display = "none";
+	      		
+      			if(bManager)
+      			{
+      				viewQnABoxbtnDel.style.display = "inline";
+      				viewQnABoxbtnMod.style.display = "inline";
+      			}	
+      			else
+   				{
+	      			if(responseData.bMine == true)
+	      			{
+	      				viewQnABoxbtnDel.style.display = "inline";
+		      			viewQnABoxbtnMod.style.display = "inline";
+	      			}
+	      			else
+      				{
+	      				viewQnABoxbtnDel.style.display = "none";
+	      				viewQnABoxbtnMod.style.display = "none";
+      				}
+   				}
+      		}
+	      	
+	      	viewQnABoxbtnList.style.display = "inline";
+	      	
+	      	viewData = responseData;
+			
+			hideQnaListBox();
+	    });
+	    
+	    request.fail(function(jqXHR, textStatus){     	
+	        alert(textStatus);
+	    });
+	}
+	
+	function onClickQnaList()
+	{
+		hideQnaView();
+		
+		if(isHideQnaListBox())
+			searchQnA(gSearchQnAOption, gSearchQnAWord, gSearchQnAPageIdx);
+	}
+	
+	function onClickQnaDelete()
+	{
+		var reqObj = new Object();
+		
+		reqObj.classSeq = /*[[${class.seq}]]*/;
+	    reqObj.seq = viewData.seq;	    
+	    reqObj.word = gSearchQnAWord;
+	    reqObj.option = gSearchQnAOption;
+	    reqObj.pageIdx = gSearchQnAPageIdx;
+	    
+	    var request = $.ajax({ url : /*[[@{/api/deleteClassQna}]]*/, type : "post", data : reqObj, dataType: "text"});
+	    
+	    request.done(function(data){makeListQnA(data); hideQnaView(); hideQnaQWrite();});
+	    
+	    request.fail(function(jqXHR, textStatus){ alert(textStatus); });
+	}
+	
+	function onClickQnaModify()
+	{
+		hideQnaView();
+		
+		if(bManager == false)
+		{
+			showQnaQWrite(viewData.seq,viewData.qTitle, viewData.question, viewData.bSec);
+		}
+		else
+		{
+			showQnaAWrite(viewData.seq,viewData.qTitle, viewData.qWriter, viewData.qRegDate, viewData.question, viewData.answer,viewData.bSec);
+		}
+	}
+	
+	function onClickQnaAnswer()
+	{
+		hideQnaView();
+		showQnaAWrite(viewData.seq,viewData.qTitle, viewData.qWriter, viewData.qRegDate, viewData.question, "",viewData.bSec);
+	}
+</script>
+	<h4>Q&amp;A 글보기</h4>
+	<div class="tbList">
+		<table border="1" cellspacing="0" summary="과제 글읽기">
+			<caption>QnA글보기 </caption>
+			<colgroup>
+				<col width="100">
+				<col width="">
+			</colgroup>
+			<thead>
+			<thead>
+				<tr>
+					<th colspan="1">제목</th>
+					<th colspan="1" class="read" scope="colgroup" id="viewQnABoxTitle"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td colspan="2" class="listinfo">
+						<span class="title">작성자</span>
+						<span id="viweBoxQWriter"></span>
+						<span class="title">작성일시</span>
+						<span id="viewQnABoxQRegDate"></span>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="content" id="viewQnABoxQuestion" style="line-height:1.5;"></td>
+				</tr>
+			</tbody>
+		</table>
+		<table id="viewQnABoxAnswerTable" name="answerRead" border="1" cellspacing="0" summary="답변 글읽기">
+			<caption>답변 글읽기</caption>
+			<thead>
+				<tr>
+					<th colspan="1" class="read" scope="colgroup">답변</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td colspan="1" class="listinfo">
+						<span class="title">작성자</span>
+						<span id="atitleWriter"></span>
+					</td>
+				</tr>			
+				<tr>
+					<td colspan="1" class="content" id="viewQnABoxAnswer"></td>
+				</tr>	            
+			</tbody>
+		</table>           
+		<div class="btnWrap">
+			<span class="btnBasic light" id="viewQnABoxbtnList"> <button type="button" onclick="onClickQnaList();">목록</button></span>
+			<span class="btnBasic light" id="viewQnABoxbtnDel"> <button type="button" onclick="onClickQnaDelete();">삭제</button></span> 
+			<span class="btnBasic blue"  id="viewQnABoxbtnMod"> <button type="button" onclick="onClickQnaModify();">수정</button></span> 
+			<span class="btnBasic blue"  id="viewQnABoxbtnAnswer"> <button type="button" onclick="onClickQnaAnswer();">답변</button></span> 
+		</div>
+	</div>
+</div>
+</body>
+</html>

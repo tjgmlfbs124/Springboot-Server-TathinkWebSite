@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="writeBox" style="display:none;">
+<script th:inline="javascript">
+	var writeBox = document.getElementById("writeBox");
+	
+	function showQuestionGroupEduWrite()
+	{		
+		createMyEditerEx("writeBoxContent", "writeBoxConfirm", "writeBoxForm", "", /*[[@{/smartEditor/SmartEditor2Skin}]]*/,formSubmit);
+
+		writeBox.style.display="block";
+	}
+	
+	function formSubmit()
+	{	
+		if(document.getElementById("writeBoxCompanyName").value == "" || document.getElementById("writeBoxCompanyName").value == "기업/기관명을 입력하세요."){
+	   		alert("기업/기관명을 입력하세요.");
+	   		return false
+	   	}
+
+	   	if(document.getElementById("writeBoxCharder").value == "" || document.getElementById("writeBoxCharder").value == "담당자 성함을 입력하세요."){
+	   		alert("담당자 성함을 입력하세요.");
+	   		return false
+	   	}
+	   	
+	   	if((document.getElementById("writeBoxMobile01").value == "" || document.getElementById("writeBoxMobile02").value == "" || document.getElementById("writeBoxMobile03").value == "") && (document.getElementById("writeBoxEmail01").value == "" || document.getElementById("writeBoxEmail02").value == ""))
+	   	{
+	   		alert("연락처를 입력하세요.");
+	   		return false
+	   	}
+	   	
+	   	if(document.getElementById("writeBoxMobile01").value != "" && document.getElementById("writeBoxMobile02").value != "" && document.getElementById("writeBoxMobile03").value != ""){
+	   		var mobile = document.getElementById("writeBoxMobile01").value + "-" + document.getElementById("writeBoxMobile02").value + "-" + document.getElementById("writeBoxMobile03").value;
+	   		
+	   		if(isValidMobile(mobile) == false)
+			{
+	   			alert('올바른 전화번호를 입력하세요.');
+	   			return false;
+	   		} 
+	   	}
+
+	   	if(document.getElementById("writeBoxEmail01").value != "" && document.getElementById("writeBoxEmail02").value != ""){
+	   		var email = document.getElementById("writeBoxEmail01").value + "@" +document.getElementById("writeBoxEmail02").value;
+	   		
+	   		if(isValidEmail(email) == false)
+			{
+	   			alert('올바른 이메일 주소를 입력하세요.');
+	   			return false;
+	   		}   		
+	   	}
+	   		   	
+	   	var agree = document.getElementById("writeBoxAgree").checked;
+	   	if(agree == false ){
+	   		alert("개인정보 수집 이용에 대해 동의해 주세요.");
+	   		return false;
+	   	}
+	   	return true;
+	}	
+	
+	function onClickCancle()
+	{
+		history.back();
+	}
+	
+	function onChangeEmail()
+	{
+		var email02 = document.getElementById("writeBoxEmail02");
+		var selecter = document.getElementById("wirteBoxEmailSelecter");
+		var selectValue = selecter.options[selecter.selectedIndex].value;
+
+		if(selectValue == "")
+		{
+			email02.value = "";
+			email02.readOnly=false;
+		}
+		else
+		{
+			email02.value = selectValue;
+			email02.readOnly=true;
+		}
+	}
+	
+</script>
+	<h3>단체교육 문의</h3>
+	<form name="writeBoxForm" id="writeBoxForm" th:action="@{/board/questionGroupEduWriteSubmit}" onsubmit="return formSubmit();" method="post" enctype="multipart/form-data">        
+		<div class="table">
+			<table>
+				<caption>단체교육 문의 글쓰기 서식</caption>
+				<colgroup>
+					<col style="width:200px">
+					<col style="width:">
+				</colgroup>
+				<tbody>
+					<tr>
+						<th scope="row"><label for="writeBoxTitle">제목</label></th>
+						<td>
+							<span class="formElement">
+								<input type="text" id="writeBoxTitle" name="title" placeholder="제목을 입력하세요." style="width:500px;" maxlength="255" >
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="writeBoxCompanyName">기업/기관명 </label></th>
+						<td>
+							<span class="formElement">
+								<input type="text" id="writeBoxCompanyName" name="companyName" placeholder="기업/기관명을 입력하세요." style="width:500px;" maxlength="255">
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="writeBoxCharder">담당자 </label></th>
+						<td>
+							<span class="formElement">
+								<input type="text" id="writeBoxCharder" name="charder" placeholder="담당자 성함을 입력하세요." style="width:500px;" maxlength="255">
+							</span>
+						</td>
+					</tr>	
+					<tr>
+						<th scope="row"><label for="writeMobile01">연락처</label></th>
+						<td>
+							<span class="formElement">
+								<select title="휴대전화 앞번호 선택" style="width:88px;" id="writeBoxMobile01" name="mobile01">
+									<option value="" selected="selected">선택</option>
+									<option value="010">010</option>
+									<option value="011">011</option>
+									<option value="016">016</option>
+									<option value="017">017</option>
+									<option value="018">018</option>
+									<option value="019">019</option>
+								</select>
+							</span>
+							<span class="formElement">
+								<input type="number" title="휴대전화 중간번호 입력" style="width:93px;" id="writeBoxMobile02" name="mobile02" max="9999">
+							</span>
+							<span class="formElement">
+								<input type="number" title="휴대전화 마지막번호 입력" style="width:93px;" id="writeBoxMobile03" name="mobile03" max="9999">
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">이메일</th>
+						<td>
+							<span class="formElement">
+								<input type="text" title="이메일 입력" style="width:134px;" id="writeBoxEmail01" name="email01" maxlength="40" >
+							</span> 
+							<em>@</em>
+							<span class="formElement">
+								<input type="text" title="이메일 도메인 입력" style="width:128px;" id="writeBoxEmail02" name="email02" maxlength="40">
+							</span>
+							<span class="formElement">
+								<select title="이메일 도메인 선택" id="wirteBoxEmailSelecter" style="width:150px;" onchange="onChangeEmail();">
+									<option value="" selected="selected">직접입력</option>
+									<option value="naver.com">naver.com</option>
+									<option value="nate.com">nate.com</option>
+									<option value="dreamwiz.com">dreamwiz.com</option>
+									<option value="yahoo.co.kr">yahoo.co.kr</option>
+									<option value="empal.com">empal.com</option>
+									<option value="unitel.co.kr">unitel.co.kr</option>
+									<option value="gmail.com">gmail.com</option>
+									<option value="korea.com">korea.com</option>
+									<option value="chol.com">chol.com</option>
+									<option value="paran.com">paran.com</option>
+									<option value="freechal.com">freechal.com</option>
+									<option value="hanmail.net">hanmail.net</option>
+									<option value="hotmail.com">hotmail.com</option>
+								</select>
+							</span>
+						</td>
+					</tr>				
+					<tr>
+						<td colspan="2" scope="row">
+							<textarea name="content" id="writeBoxContent" style="width: 700px; height: 400px;"></textarea>
+						</td>
+					</tr>                
+				</tbody>
+			</table>
+		</div>
+		<div class="graybox">
+			<p class="PDtitle">개인정보 수집·이용에 대한 동의</p>
+			<ol>
+				<li><b>수집항목 :</b> 기업명, 이름, 연락처, 이메일</li>
+				<li><b>수집목적 :</b> 문의사항에 대한 회신</li>
+				<li><b>이용기간 :</b> 개인정보 수집 및 이용에 대한 목적이 달성된 후에는 해당 정보를 파기합니다.</li>
+			</ol>
+		</div>
+		<div class="agreeWrap"> 
+			<span class="formElement">
+				<input type="radio" id="writeBoxAgree" name="agree" value="Y"> <label for="TA_agree">동의함</label>
+			</span>
+			<span class="formElement">
+				<input type="radio" id="writeBoxDisAgree" name="agree" value="N"> <label for="TA_disagree02">동의하지 않음</label>
+			</span> 
+		</div>
+		<div class="btnWrap"> 
+			<span class="btnLarge light"><a href="javascript:{}" onclick="onClickCancle();">취소</a></span> 
+			<span class="btnLarge"><button id="writeBoxConfirm" type="button">확인</button></span>             
+		</div>
+	</form>
+</div>
+</body>
+</html>

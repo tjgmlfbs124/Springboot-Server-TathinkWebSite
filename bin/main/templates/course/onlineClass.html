@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<!--[if lt IE 9]>
+	<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+<![endif]-->
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready( function() {	
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+});
+</script>
+</head>
+
+<body>
+<div id="wrap">
+	<div th:replace="header :: contents"></div>
+	<div id="container"> 
+		<div class="subhead">
+   			<div class="subtitle">
+     			<h2>강의소개</h2>
+     			<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think!</span>
+     			<div class="place">
+     				<span><a th:href="@{/}">Home</a></span>> 강의소개 > 코딩입문 > <th:block th:text="${course.courseName}" /> > <th:block th:text="${studyInfo.studyName}" />
+      			</div>
+   			</div>
+ 		</div>
+ 		<div id="contents_container">
+   			<div id="contents_container2">
+     			<div class="lnb">
+     				<div th:replace="course/courseLnb :: contents"></div>
+     			</div>
+     			<div class="subcontents">
+					<div class="courseintro"> 
+						<img th:src="@{${course.bigImgPath}}" width="825" height="240" alt="TAThink"/> 
+					</div>
+					<h3><th:block th:text="${studyInfo.studyName}" /></h3>
+        			<div class="tb02">
+						<table width="100%" class="tb02" border="1" cellspacing="0" summary="과목정보">
+							<caption>과목정보</caption>
+							<colgroup>
+								<col>
+								<col width="115">
+								<col>
+								<col width="115">
+								<col>
+							</colgroup>
+							<tbody>
+								<tr>
+									<td class="teacherimg" rowspan="4"><img th:src="@{${teacher.imgPath}}" width="130" height="163" alt=""/></td>
+									<th scope="row">담당교수</th>
+									<td><th:block th:text="${teacher.realname}" /></td>
+									<th scope="row">교육비</th>
+									<td><th:block th:text="${studyInfo.cost+' 원'}" /></td>
+								</tr>
+								<tr>
+									<th scope="row">신청기간</th>
+									<td>항시</td>
+									<th scope="row">수강인원</th>
+									<td>-</td>
+								</tr>
+								<tr>
+									<th scope="row">교육기간</th>
+									<td colspan="3">항시</td>
+								</tr>
+								<tr>
+									<th scope="row">교육시간</th>
+									<td colspan="3"><th:block th:text="${studyInfo.time}" /></td>
+								</tr>
+							</tbody>
+          				</table>
+        			</div>
+					<a name="epilogue"></a>
+					<div class="tab type5">
+						<ul>
+							<li class="present"><a href="#service1">수업목차</a></li>
+							<li><a href="#service2">담당교수 소개</a></li>
+						</ul>
+					</div>
+					<div class="tabContWrap"> 
+						<div th:replace="course/classTab01 :: classTab01"></div>
+						<div th:replace="course/classTab02 :: classTab02"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="viewBox" style="display:none">
+<script th:inline="javascript">
+	var viewBox = document.getElementById("viewBox");
+	
+	function hideQnaView()
+	{
+		viewBox.style.display="none";
+		location.href = "#contents_container";
+	}
+	
+	function showQnaView(seq)
+	{
+		var reqObj = new Object();
+		var pwd = null;
+
+	    reqObj.seq = seq;
+	    
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/viewQna}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.done(function (data)
+	    {      	
+	    	var responseData = JSON.parse(data);
+	    	
+	      	if(!responseData)
+	      	{
+	         	alert("세션이 만료되어 재접속이 필요합니다.");
+	         	return false;
+	      	}    
+	      	
+	    	if(responseData.error != null)
+	    	{
+	    		alert(responseData.error);
+	    		return false;
+	    	}
+	    	
+	    	viewBox.style.display = "block";
+	    	location.href = "#viewBox";
+	    	
+	    	var viewBoxTitle = document.getElementById("viewBoxTitle");
+	    	var viewBoxQRegDate = document.getElementById("viewBoxQRegDate");
+	    	var viweBoxQWriter = document.getElementById("viweBoxQWriter");
+	    	var viewBoxQuestion = document.getElementById("viewBoxQuestion");
+	    	var viewBoxAnswer = document.getElementById("viewBoxAnswer");
+	    	var viewBoxAnswerTable = document.getElementById("viewBoxAnswerTable");
+	    	var viewBoxbtnDel = document.getElementById("viewBoxbtnDel");
+	    	var viewBoxbtnAnswer = document.getElementById("viewBoxbtnAnswer");
+	    	var viewBoxbtnMod = document.getElementById("viewBoxbtnMod");
+	    	var viewBoxbtnList = document.getElementById("viewBoxbtnList");
+	    	
+	    	viewBoxTitle.textContent = responseData.qTitle;
+	    	viewBoxTitle.innerHTML = viewBoxTitle.innerHTML.replace(/\n\r?/g, '<br />');
+	    	viewBoxQRegDate.textContent = convertDateTimeString(responseData.qRegDate);
+	    	viweBoxQWriter.textContent = responseData.qWriter;
+	    	viweBoxQWriter.innerHTML = viweBoxQWriter.innerHTML.replace(/\n\r?/g, '<br />');
+	    	viewBoxQuestion.innerHTML = responseData.question;
+	    	viewBoxAnswer.innerHTML = responseData.answer;
+	      	
+	      	if(responseData.answer == null)
+      		{
+	      		viewBoxAnswerTable.style.display = "none";
+	      		
+	      		if(bManager)
+	      		{
+	      			viewBoxbtnAnswer.style.display = "inline";
+	      			viewBoxbtnDel.style.display = "inline";
+	      			viewBoxbtnMod.style.display = "none";
+	      		}
+	      		else
+      			{
+	      			viewBoxbtnAnswer.style.display = "none";
+	      			
+	      			if(responseData.bMine == true)
+	      			{
+	      				viewBoxbtnDel.style.display = "inline";
+	      				viewBoxbtnMod.style.display = "inline";
+	      			}
+	      			else
+      				{
+	      				viewBoxbtnDel.style.display = "none";
+	      				viewBoxbtnMod.style.display = "none";
+      				}
+      			}
+      		}
+	      	else
+      		{
+	      		viewBoxAnswerTable.style.display = "inline-table";
+	      		
+	      		viewBoxbtnAnswer.style.display = "none";
+	      		
+      			if(bManager)
+      			{
+      				viewBoxbtnDel.style.display = "inline";
+      				viewBoxbtnMod.style.display = "inline";
+      			}	
+      			else
+   				{
+	      			if(responseData.bMine == true)
+	      			{
+	      				viewBoxbtnDel.style.display = "inline";
+		      			viewBoxbtnMod.style.display = "inline";
+	      			}
+	      			else
+      				{
+	      				viewBoxbtnDel.style.display = "none";
+	      				viewBoxbtnMod.style.display = "none";
+      				}
+   				}
+      		}
+	      	
+	      	viewBoxbtnList.style.display = "inline";
+	      	
+	      	viewData = responseData;
+	      	
+	      	hideListBox();
+	    });
+	    
+	    request.fail(function(jqXHR, textStatus){     	
+	        alert(textStatus);
+	    });
+	}
+	
+	function onClickList()
+	{
+		hideQnaView();
+		
+		if(isHideListBox())
+			search(gSearchOption, gSearchWord, gSearchPageIdx);
+	}
+	
+	function onClickDelete()
+	{
+		if(confirm("해당Q&A를 삭제하시겠습니까?")){
+			var reqObj = new Object();
+			
+		    reqObj.seq = viewData.seq;
+		    reqObj.word = gSearchWord;
+		    reqObj.option = gSearchOption;
+		    reqObj.pageIdx = gSearchPageIdx;
+		    
+		    var request = $.ajax({ url : /*[[@{/api/deleteQna}]]*/, type : "post", data : reqObj, dataType: "text"});
+		    
+		    request.done(function(data){makeList(data); hideQnaView(); hideQnaQWrite();});
+		    
+		    request.fail(function(jqXHR, textStatus){ alert(textStatus); });
+		}
+	}
+	
+	function onClickModify()
+	{
+		hideQnaView();
+		
+		if(bManager == false)
+		{
+			showQnaQWrite(viewData.seq,viewData.qTitle, viewData.question, viewData.bSec);
+		}
+		else
+		{
+			showQnaAWrite(viewData.seq,viewData.qTitle, viewData.qWriter, viewData.qRegDate, viewData.question, viewData.answer,viewData.bSec);
+		}
+	}
+	
+	function onClickAnswer()
+	{
+		hideQnaView();
+		showQnaAWrite(viewData.seq,viewData.qTitle, viewData.qWriter, viewData.qRegDate, viewData.question, "",viewData.bSec);
+	}
+</script>
+	<h3>Q&amp;A 글보기</h3>
+	<div class="tbList">
+		<table border="1" cellspacing="0" summary="과제 글읽기">
+			<caption>과제 글보기 </caption>
+			<colgroup>
+				<col width="100">
+				<col width="">
+			</colgroup>
+			<thead>
+			<thead>
+				<tr>
+					<th colspan="1">제목</th>
+					<th colspan="1" class="read" scope="colgroup" id="viewBoxTitle"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td colspan="2" class="listinfo">
+						<span class="title">작성자</span>
+						<span id="viweBoxQWriter"></span>
+						<span class="title">작성일시</span>
+						<span id="viewBoxQRegDate"></span>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="content" id="viewBoxQuestion" style="line-height:1.5;"></td>
+				</tr>
+			</tbody>
+		</table>
+		<table id="viewBoxAnswerTable" name="answerRead" border="1" cellspacing="0" summary="답변 글읽기">
+			<caption>답변 글읽기</caption>
+			<thead>
+				<tr>
+					<th colspan="1" class="read" scope="colgroup">답변</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td colspan="1" class="content" id="viewBoxAnswer"></td>
+				</tr>	            
+			</tbody>
+		</table>           
+		<div class="btnWrap">
+			<span class="btnBasic light" id="viewBoxbtnList"> <button type="button" onclick="onClickList();">목록</button></span>
+			<span class="btnBasic light" id="viewBoxbtnDel"> <button type="button" onclick="onClickDelete();">삭제</button></span> 
+			<span class="btnBasic blue"  id="viewBoxbtnMod"> <button type="button" onclick="onClickModify();">수정</button></span> 
+			<span class="btnBasic blue"  id="viewBoxbtnAnswer"> <button type="button" onclick="onClickAnswer();">답변</button></span> 
+		</div>
+	</div>
+</div>
+</body>
+</html>

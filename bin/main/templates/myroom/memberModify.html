@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta name="viewport" content="width=1080" />
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}" />
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}" />
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/js/core.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/sha256.min.js}"></script>
+<script src="http://dmaps.daum.net/map_js_init/postcode.v2.js"></script>
+
+<!--[if lt IE 9]>
+		<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+		<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+	<![endif]-->
+	
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+var old_email ="";
+var old_Pwd = "";
+$(document).ready( function() {	
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	var username = /*[[${member.username}]]*/;
+ 	if (username==null){
+		alert("해당 회원정보가 없습니다.");
+	}else{
+		showMemberView(username);
+	}
+});
+
+function showMemberView(username)
+{
+	var reqObj = new Object();
+	var pwd = null;
+
+    reqObj.username = username;
+    
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/viewMemberModify}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(function (data)
+    {      	
+    	var value="";
+    	var responseData = JSON.parse(data);
+    	
+      	if(!responseData)
+      	{
+         	alert("세션이 만료되어 재접속이 필요합니다.");
+         	return false;
+      	}    
+      	
+    	if(responseData.error != null)
+    	{
+    		alert(responseData.error);
+    		return false;
+    	}
+      	
+    	var level = document.getElementById("level");
+    	var photo = document.getElementById("photo");
+    	var realname = document.getElementById("userRealName");
+		var username = document.getElementById("userId"); 
+		var email1 = document.getElementById("email1");
+		var email2 = document.getElementById("email2");
+		var bRcvEmail = document.getElementById("mailagree");
+		var mobile1 = document.getElementById("mobileNo1");
+		var mobile2 = document.getElementById("mobileNo2");
+		var mobile3 = document.getElementById("mobileNo3");
+		var bRevSms = document.getElementById("mobileagree");
+		var idNumber = document.getElementById("jumin");
+		var bMan = document.getElementById("sung");
+		var category = document.getElementById("memberCategory");
+		var company = document.getElementById("company");
+		var grade = document.getElementById("grade");
+		var protector = document.getElementById("protector");
+		var protectorMobile1 = document.getElementById("ptecMobileNo1");
+		var protectorMobile2 = document.getElementById("ptecMobileNo2");
+		var protectorMobile3 = document.getElementById("ptecMobileNo3");
+		var bRevProtectorSms = document.getElementById("protectorAgree");
+		var joinPath = document.getElementById("joinPath");
+		var zipCode = document.getElementById("zipCode");
+		var address01 = document.getElementById("address01");
+		var address02 = document.getElementById("address02");
+		var teacherInfoContainer = document.getElementById("teacherInfoContainer");
+		var jobPosition = document.getElementById("jobPosition");
+		var teacherInfo = document.getElementById("teacherInfo");
+		
+		var rootPath = /*[[@{/}]]*/
+			
+		if(responseData.imgPath == null || responseData.imgPath.length < 1)
+		{
+			photo.src="";
+			document.getElementById("imgPath").value = "";
+		}
+		else
+		{
+			photo.src = rootPath+responseData.imgPath.substr(1);
+			document.getElementById("imgPath").value = responseData.imgPath;
+		}
+
+		if(responseData.level == "LEVEL_ADMIN")
+		{
+			level.textContent = "관리자";
+			teacherInfoContainer.style.display="block";
+		}
+		else if(responseData.level == "LEVEL_TEACHER")
+		{	
+			level.textContent = "선생님";
+			teacherInfoContainer.style.display="block";
+		}
+		else if(responseData.level == "LEVEL_MEMBER")
+		{
+			level.textContent = "일반";
+			teacherInfoContainer.style.display="none";
+		}
+		
+		realname.textContent = responseData.realname;
+		document.getElementById("realname").value = responseData.realname;
+		username.textContent = responseData.username;
+		document.getElementById("username").value = responseData.username;
+		
+		old_Pwd = responseData.password;
+		
+		old_email = responseData.email;
+		var strArray= responseData.email.split('@');
+		email1.value = strArray[0];
+		email2.value = strArray[1];
+				
+		if(responseData.bRcvEmail)
+			bRcvEmail.checked = true;
+		else
+			bRcvEmail.checked = false;
+		
+		strArray= responseData.mobile.split('-');
+		mobile1.value = strArray[0];
+		mobile2.value = strArray[1];
+		mobile3.value = strArray[2];
+		
+		if(responseData.bRevSms)
+			bRevSms.checked = true;
+		else
+			bRevSms.checked = false;
+		
+		idNumber.textContent = responseData.idNumber;
+		document.getElementById("idNumber").value = responseData.idNumber;
+		
+		if(responseData.bMan)
+		{
+			bMan.textContent = "남";
+		}
+		else
+		{
+			bMan.textContent = "여"
+		}
+		document.getElementById("bMan").value = responseData.bMan;
+		
+		category.value = responseData.memberCategory;
+
+		company.value = responseData.company;
+		grade.value = responseData.grade;
+		protector.value = responseData.protector;
+		
+		if(responseData.protectorMobile!= null && responseData.protectorMobile!="" ){
+			strArray= responseData.protectorMobile.split('-');
+			protectorMobile1.value = strArray[0];
+			protectorMobile2.value = strArray[1];
+			protectorMobile3.value = strArray[2];	
+		}		
+		
+		if(responseData.bRevProtecterSms)
+			bRevProtectorSms.checked = true;
+		else
+			bRevProtectorSms.checked = false;
+		
+		joinPath.value = responseData.joinPath;
+
+		zipCode.value = responseData.zipCode;
+		address01.value = responseData.address01;
+		address02.value = responseData.address02;
+		
+		jobPosition.value = responseData.jobPosition;
+		teacherInfo.value = responseData.teacherInfo;
+		      	
+      	viewData = responseData;
+    });
+    
+    request.fail(function(jqXHR, textStatus){     	
+        alert(textStatus);
+    });
+}
+
+function previewImage(targetObj, previewId) {
+    var str = targetObj.value;		
+	var preview = document.getElementById(previewId); //div id   
+	var ua = window.navigator.userAgent;
+	var maxSize = 1024 * 1024 * 5;
+	 
+	document.getElementById("uploadFileName").value = targetObj.value.substring(str.lastIndexOf("\\")+1);
+	 
+    if (ua.indexOf("MSIE") > -1) {
+    	targetObj.select();
+
+    	var src = document.selection.createRange().text;
+        var img = document.getElementById(previewId);
+        img.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='"+ src + "', sizingMethod='scale')";             
+    }
+    else{		    	
+		var files = targetObj.files;
+		   for ( var i = 0; i < files.length; i++) {			
+				var file = files[i];
+				
+				var imageType = /image.*/;
+				if (!file.type.match(imageType))
+				    continue;
+				
+				var prevImg = document.getElementById("prev_" + previewId);
+				if (prevImg) {
+				    preview.removeChild(prevImg);
+				}
+				
+				if (file.size > maxSize){
+					alert("사진의 용량이 5M 이상 입니다.");
+					continue;
+				}
+				
+				var img = document.createElement("img");
+				img.id = "prev_" + previewId;
+				img.classList.add("obj");
+				img.file = file;
+				img.style.width = '126px';
+				img.style.height = '156px';
+				
+				preview.appendChild(img);
+				
+				document.getElementById("photo").style.display="none";
+								
+				if (window.FileReader) {
+				    var reader = new FileReader();
+				    reader.onloadend = (function(aImg) {
+				        return function(e) {
+				            aImg.src = e.target.result;
+				        };
+				    })(img);
+				    reader.readAsDataURL(file);
+				} else {
+				    if (!document.getElementById("sfr_preview_error_" + previewId)) {
+				        var info = document.createElement("p");
+				        info.id = "sfr_preview_error_" + previewId;
+				        info.innerHTML = "not supported FileReader";
+				        preview.insertBefore(info, null);
+				    }
+				}
+		 }
+	}
+}
+
+function delPreviewImage(previewId){
+	var ua = window.navigator.userAgent;
+	var preview = document.getElementById(previewId); 
+	
+	var photo = document.getElementById("photo");
+	photo.src="";
+	
+	document.getElementById("uploadFileName").value = "";
+	document.getElementById("imgPath").value = "";	
+	
+	if (ua.indexOf("MSIE") > -1) {
+		if (preview) {
+		    preview.remove();
+		}
+	}
+	else{
+		var prevImg = document.getElementById("prev_" + previewId);
+		if (prevImg) {				
+		    preview.removeChild(prevImg);
+		}
+	}
+	
+	var imgFile = document.getElementById("IMG_FILE");
+	imgFile.value = null;
+	imgFile.parentNode.replaceChild(imgFile.cloneNode(true), imgFile);
+}
+
+var pwCheckOK = false;
+var emailAuthOK = false;
+var timerId;
+var strPwd = "";
+var strRandom = "";
+var strEmail = "";
+
+function onPasswordBlur()
+{
+	var value = $('#passwd').val();
+	var idReg = /^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{9,15}$/;
+
+	$('#pwdCheckMsg').empty();
+	
+	if(value != strPwd)
+	{
+		document.getElementById("repasswd").value="";
+		$('#rePwdCheckMsg').empty();
+	}
+	
+	if(value == "")	return;
+	
+	if(!idReg.test(value) || value.length < 9 || value.length > 15){
+		$('#pwdCheckMsg').append("비밀번호는 9~15자의 영문, 특수문자, 숫자를 혼합하여 사용 가능합니다.");	
+		$("input[name=repasswd]").attr("disabled", true);
+	}
+	else{
+		strPwd = value;
+		$('#rePwdCheckMsg').empty();
+		$("input[name=repasswd]").attr("disabled", false);
+	} 	
+}
+
+function onRePasswordBlur()
+{
+	var value = $('#repasswd').val();
+	 
+	$('#rePwdCheckMsg').empty();
+	if(value == "")	return;
+	
+	if(strPwd != value){
+		$('#rePwdCheckMsg').append("입력하신 비밀번호와 동일하지 않습니다.");
+		pwCheckOK = false;
+	}
+	else{
+		pwCheckOK = true;
+	} 	
+}
+
+function onChangeEmail3()
+{
+	var value = $('#email3').val();
+	
+	if(value != ""){
+		document.getElementById("email2").value = value;
+		document.getElementById("email2").disabled = true;
+	}
+	else{
+		document.getElementById("email2").value = "";
+		document.getElementById("email2").disabled = false;
+	}
+}
+
+function onClickEmalAuth()
+{
+	strRandom = "";
+	clearTimeout(timerId);
+	$('#authCountdown').empty();
+	
+	if($('#email1').val() == "" || $('#email2').val() == ""){
+		alert("이메일을 입력하세요.");
+		return;
+	}
+	else{
+    	strEmail = $('#email1').val() + "@" + $('#email2').val();
+	}
+	
+	$.ajax({
+		url:/*[[@{/api/emailAuth}]]*/,
+		type:"post",
+		dataType:"text",
+		data: {
+			email: strEmail
+		},
+		success:function(data){	
+			if(data == ""){
+				alert("인증번호를 발송하였습니다.\n수신한 7개의 숫자를 입력하세요.");
+				countdown("authCountdown", 3, 0);
+			}
+			else{
+				alert(data);
+			}
+		},
+		error : function(request, status, error ) {   // 오류가 발생했을 때 호출된다. 
+			alert("서버와 통신중 오류가 발생하였습니다.");
+		}
+	});
+}
+
+function onClickAuthNumConfirm()
+{
+	if($('#authNum').val() == ""){
+		alert("인증번호를 입력하세요.");
+		return;
+	}
+	
+	var authNum = $('#authNum').val();
+	
+	$.ajax({
+		url:/*[[@{/api/emailAuthConfirm}]]*/,
+		type:"post",
+		dataType:"text",
+		data: {
+			num: authNum
+		},
+		success:function(data){	
+			if(data == ""){
+		    	clearTimeout(timerId);
+		    	$('#authCountdown').empty();
+		    	emailAuthOK = true;		   
+		    	document.getElementById("email").value = strEmail;
+		    	alert("인증되었습니다.");
+			}
+			else{
+				alert(data);
+			}
+		},
+		error : function(request, status, error ) { 
+			alert("서버와 통신중 오류가 발생하였습니다.");
+		}
+	});
+}
+
+function countdown(elementName, minutes, seconds){
+    var element, endTime, hours, mins, msLeft, time;
+
+    function twoDigits( n ){
+        return (n <= 9 ? "0" + n : n);
+    }
+
+    function updateTimer(){
+        msLeft = endTime - (+new Date);
+        if ( msLeft < 1000 ) {	
+        	strRandom = "";
+            alert("인증시간이 초과 되었습니다.");
+            element.innerHTML = "";
+        } else {
+            time = new Date( msLeft );
+            hours = time.getUTCHours();
+            mins = time.getUTCMinutes();
+            element.innerHTML = '인증시간 ' + (hours ? hours + ':' + twoDigits( mins ) : mins) + '분 ' + twoDigits( time.getUTCSeconds() ) + '초 남음';
+            timerId = setTimeout( updateTimer, time.getUTCMilliseconds() + 500 );
+        }
+    }
+
+    element = document.getElementById( elementName );
+    endTime = (+new Date) + 1000 * (60*minutes + seconds) + 500;
+    updateTimer();
+}
+
+function execDaumPostcode() {
+	var width = 500;
+	var height = 600;
+	
+    new daum.Postcode({
+        oncomplete: function(data) {
+            // 팝업에서 검색결과 항목을 클릭했을때 실행할 코드를 작성하는 부분.
+
+            // 도로명 주소의 노출 규칙에 따라 주소를 조합한다.
+            // 내려오는 변수가 값이 없는 경우엔 공백('')값을 가지므로, 이를 참고하여 분기 한다.
+            var fullRoadAddr = data.roadAddress; // 도로명 주소 변수
+            var extraRoadAddr = ''; // 도로명 조합형 주소 변수 
+
+            // 법정동명이 있을 경우 추가한다. (법정리는 제외)
+            // 법정동의 경우 마지막 문자가 "동/로/가"로 끝난다.
+            if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
+                extraRoadAddr += data.bname;
+            }
+            // 건물명이 있고, 공동주택일 경우 추가한다.
+            if(data.buildingName !== '' && data.apartment === 'Y'){
+               extraRoadAddr += (extraRoadAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+            }
+            // 도로명, 지번 조합형 주소가 있을 경우, 괄호까지 추가한 최종 문자열을 만든다.
+            if(extraRoadAddr !== ''){
+                extraRoadAddr = ' (' + extraRoadAddr + ')';
+            }
+            // 도로명, 지번 주소의 유무에 따라 해당 조합형 주소를 추가한다.
+            if(fullRoadAddr !== ''){
+                fullRoadAddr += extraRoadAddr;
+            }
+
+            // 우편번호와 주소 정보를 해당 필드에 넣는다.
+            document.getElementById('zipCode').value = data.zonecode; //5자리 새우편번호 사용
+            document.getElementById('address01').value = fullRoadAddr;
+            //document.getElementById('address02').value = data.jibunAddress;
+        }
+    }).open({
+    	autoClose: true,
+    	popupName: 'postcodePopup',
+    	left: (window.screen.width / 2) - (width / 2),
+        top: (window.screen.height / 2) - (height / 2)
+    });
+}	
+
+function regSubmit(){
+			
+	if(strPwd!="" && !pwCheckOK){
+		alert("비밀번호를 확인하세요.");
+   		return false;
+	}
+	
+	if(strPwd==""){
+		document.getElementById("password").value = old_Pwd;
+	}else{
+		document.getElementById("password").value = strPwd;
+	}
+	
+	if(!emailAuthOK){
+		strEmail = $('#email1').val() + "@" + $('#email2').val();
+		
+		if(old_email != strEmail){
+			alert("이메일을 인증하세요.");
+	   		return false;			
+		}else{
+			document.getElementById("email").value = strEmail;
+		}
+	}
+
+	if($('#mailagree').is(":checked"))
+		document.getElementById("bRevEmail").value = true;
+	else
+		document.getElementById("bRevEmail").value = false;
+	
+	if(document.getElementById("mobileNo1").value == "" || document.getElementById("mobileNo2").value == "" || document.getElementById("mobileNo3").value == ""){
+   		alert("휴대전화를 입력하세요.");
+   		return false;
+   	}
+   	else{
+   		var regTel = /^(01[016789]{1}|070|02|0[3-9]{1}[0-9]{1})-[0-9]{3,4}-[0-9]{4}$/;
+   		var tel = document.getElementById("mobileNo1").value + "-" + document.getElementById("mobileNo2").value + "-" + document.getElementById("mobileNo3").value;
+   		
+   		if(!regTel.test(tel)) {
+   			alert('올바른 전화번호를 입력하세요.');
+   			return false;
+   		}
+   		else
+   			document.getElementById("mobile").value = tel;   
+   	}
+	
+	if($('#mobileagree').is(":checked"))
+		document.getElementById("bRevSms").value = true;
+	else
+		document.getElementById("bRevSms").value = false;
+
+	
+   	var select = document.getElementById("memberCategory");	   	
+   	if(select.options[select.selectedIndex].value == ""){
+   		alert("회원분류를 선택하세요.");
+   		return false;
+   	}
+   	
+   	if(document.getElementById("ptecMobileNo1").value != "" || document.getElementById("ptecMobileNo2").value != "" || document.getElementById("ptecMobileNo3").value != ""){
+   		var regTel = /^(01[016789]{1}|070|02|0[3-9]{1}[0-9]{1})-[0-9]{3,4}-[0-9]{4}$/;
+   		var tel = document.getElementById("ptecMobileNo1").value + "-" + document.getElementById("ptecMobileNo2").value + "-" + document.getElementById("ptecMobileNo3").value;
+   		
+   		if(!regTel.test(tel)) {
+   			alert('올바른 보호자 전화번호를 입력하세요.');
+   			return false;
+   		}
+   		else
+   			document.getElementById("protectorMobile").value = tel;	   		
+   	}
+   	
+   	if($('#protectorAgree').is(":checked"))
+		document.getElementById("bRevProtecterSms").value = true;
+	else
+		document.getElementById("bRevProtecterSms").value = false;
+	
+   	
+   	if (confirm("회원정보 수정내용을 확인 하셨습니까?") == true){    //확인
+   	   	return true;
+   	}else{   //취소
+   	    return false;
+   	}
+  	
+}		
+</script>
+</head>
+
+<body>
+	<div id="wrap">
+		<div th:replace="header :: contents"></div>
+		<div id="container">
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>나의 강의실</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think</span>
+					<div class="place">
+						<span><a th:href="@{/}">Home</a></span> > 나의 강의실 > 회원정보 수정
+					</div>
+				</div>
+			</div>
+			<div id="contents_container">
+				<div id="lnb" class="lnb">
+					<div th:replace="myroom/myroomLnb :: contents"></div>
+				</div>
+				<div class="subcontents" style="display:">					
+					<div id="step02">
+						<div>
+							<h3>회원정보 수정</h3>
+						</div>
+						<form name="regForm" th:action="@{/myroom/modifySubmit}" id="regForm" onsubmit="return regSubmit();" method="post" enctype="multipart/form-data">
+							<input type="hidden" name="TA_join" value="">
+							<input type="hidden" id="realname" name="realname">
+							<input type="hidden" id="username" name="username">
+							<input type="hidden" id="idNumber" name="idNumber">
+							<input type="hidden" id="password" name="password">
+							<input type="hidden" id="imgPath" name="imgPath">							
+							<input type="hidden" id="bMan" name="bMan">
+							<input type="hidden" id="mobile" name="mobile">
+							<input type="hidden" id="email" name="email">          
+							<input type="hidden" id="bRevEmail" name="bRevEmail">
+							<input type="hidden" id="bRevSms" name="bRevSms">
+							<input type="hidden" id="protectorMobile" name="protectorMobile">
+							<input type="hidden" id="bRevProtecterSms" name="bRevProtecterSms">  
+							<!-- <h4>회원정보 수정</h4>  -->
+							<div class="table">
+								<table class="upphoto">
+									<caption>회원사진입력 서식</caption>
+									<colgroup>
+										<col style="width: 150px;">
+										<col style="width: *;">
+									</colgroup>
+									<tbody>
+										<tr>
+											<td>
+												<div class="join_photo" id="PREVIEW_IMG_DIV" name="PREVIEW_IMG_DIV"><img id="photo" width="130" height="163" alt=""/></div>
+											</td>
+											<td>
+												<span class="btnTable"> <a href="#none" onclick="delPreviewImage('PREVIEW_IMG_DIV')" id="checkTA_id">사진삭제</a></span>
+												<div class="dotLine">
+													<div class="attachFile" id="attachImgFile" name="attachImgFile" style="width: 458px;">
+														<input type="text" class="upload" id="uploadFileName" name="uploadFileName" value="사진 파일을 등록해주세요." disabled="disabled" style="width: 328px;" title="사진업로드">
+														<p class="desc">5MB 이하의 jpg, png, gif파일만 업로드 가능합니다.</p>
+														<label for="IMG_FILE">파일찾아보기</label> 
+														<input type="file" id="IMG_FILE" name="IMG_FILE" class="uploadHidden" onchange="previewImage(this, 'PREVIEW_IMG_DIV')">
+													</div>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div class="table">
+								<table>
+									<caption>회원정보를 입력하는 서식</caption>
+									<colgroup>
+										<col style="width: 20%;">
+										<col style="width: *;">
+									</colgroup>
+									<tbody>
+										<tr>
+											<th scope="row">
+												<label for="TA_level">등급</label>
+											</th>
+							                <td>
+												<span class="formElement disab" id="level"></span>
+							                </td>
+										</tr>									
+										<tr>
+											<th scope="row"><label for="userRealName">성명</label></th>
+											<td>
+												<span class="formElement disab" id="userRealName"></span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row"><label for="userId">아이디</label></th>
+											<td>
+												<span class="formElement disab" id="userId"></span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="TA_passwd">비밀번호</label> 
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<input type="password" id="passwd" name="passwd" placeholder="비밀번호 변경시에만 입력하세요." onblur="onPasswordBlur();" style="width: 228px;" maxlength="20">
+												</span>
+												<p id="pwdCheckMsg" name="pwdCheckMsg" class="desc"></p>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="TA_passwd2">비밀번호 확인</label> 
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<input type="password" id="repasswd" name="repasswd" placeholder="비밀번호 변경시 재입력하세요." onblur="onRePasswordBlur();" style="width: 228px;" maxlength="20" disabled="disabled">
+												</span>
+												<p id="rePwdCheckMsg" name="rePwdCheckMsg" class="desc">
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">이메일 주소<span class="star">별표</span></th>
+											<td>
+												<span class="formElement">
+													<input type="text" title="이메일 입력" style="width: 134px;" id="email1" name="email1" data_TA_email1="" maxlength="40"> 
+												</span> 
+												<em>@</em>
+												<span class="formElement"> 
+													<input type="text" title="이메일 도메인 입력" style="width: 128px;" maxlength="40" id="email2" name="email2" data_TA_email2="">
+												</span> 
+												<span class="formElement"> 
+													<select title="이메일 도메인 선택" style="width: 150px;" id="email3" onchange="onChangeEmail3();">
+														<option value="" selected="selected">직접입력</option>
+														<option value="naver.com">naver.com</option>
+														<option value="nate.com">nate.com</option>
+														<option value="dreamwiz.com">dreamwiz.com</option>
+														<option value="yahoo.co.kr">yahoo.co.kr</option>
+														<option value="empal.com">empal.com</option>
+														<option value="unitel.co.kr">unitel.co.kr</option>
+														<option value="gmail.com">gmail.com</option>
+														<option value="korea.com">korea.com</option>
+														<option value="chol.com">chol.com</option>
+														<option value="paran.com">paran.com</option>
+														<option value="freechal.com">freechal.com</option>
+														<option value="hanmail.net">hanmail.net</option>
+														<option value="hotmail.com">hotmail.com</option>
+													</select>
+												</span> 
+												<span class="btnTable">
+													<a href="javascript:{}" onclick="onClickEmalAuth();" id="emailAuth" name="emailAuth">메일인증하기</a>
+												</span>
+												<p class="formElement">
+													<input type="checkbox" id="mailagree" name="mailagree">
+													<label for="mailagree" class="checkbox">이메일수신 동의</label>
+												</p>
+												<div class="dotLine">
+													<span class="formElement">
+														<input type="number" id="authNum" name="authNum" title="이메일 인증번호 입력" placeholder="인증번호를 입력하세요." style="width: 298px;">
+													</span> 
+													<span class="btnTable">
+														<a href="javascript:{}" onclick="onClickAuthNumConfirm();" id="authNumConfirm" name="authNumConfirm">확인</a>
+													</span> 
+													<span class="formElement">
+														<p id="authCountdown" name="authCountdown" class="desc"></p>
+													</span>
+												</div>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<span id="th_TA_mobileNo">휴대전화</span>
+												<span class="star">별표</span>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<select title="휴대전화 앞번호 선택" style="width: 88px;" id="mobileNo1" name="mobileNo1" data_TA_mobileNo1="">
+														<option value="" selected="selected">선택</option>
+														<option value="010">010</option>
+														<option value="011">011</option>
+														<option value="016">016</option>
+														<option value="017">017</option>
+														<option value="018">018</option>
+														<option value="019">019</option>
+													</select>
+												</span>
+												<span class="formElement"> 
+													<input type="number" title="휴대전화 중간번호 입력" style="width: 93px;" id="mobileNo2" name="mobileNo2" data_TA_mobileNo2="" max="9999">
+												</span> 
+												<span class="formElement"> 
+													<input type="number" title="휴대전화 마지막번호 입력" style="width: 93px;" id="mobileNo3" name="mobileNo3" data_TA_mobileNo3="" max="9999">
+												</span>
+												<p class="formElement">
+													<input type="checkbox" name="mobileagree" id="mobileagree" value=""> 
+													<label for="mobileagree" value="" class="checkbox">SMS수신 동의</label>
+												</p>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row"><label for="jumin">생년월일6자리</label></th>
+							                <td>
+												<span class="formElement disab" id="jumin"></span>
+							                </td>
+										</tr>
+										<tr>
+											<th scope="row"><label for="sung">성별</label></th>
+							                <td>
+												<span class="formElement disab" id="sung"></span>
+							                </td>
+										</tr>
+										<tr>
+											<th scope="row">회원분류<span class="star">별표</span></th>
+											<td>
+												<span class="formElement"> 
+													<select title="회원분류" style="width: 228px;" id="memberCategory" name="memberCategory"> 
+														<option value="" selected="selected">선택</option>
+														<option value="초등학생">초등학생</option>
+														<option value="중학생">중학생</option>
+														<option value="고등학생">고등학생</option>
+														<option value="대학생">대학생</option>
+														<option value="일반인">일반인</option>
+														<option value="기타">기타</option>
+													</select>
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="TA_schoolname">학교/회사명</label>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<input type="text" id="company" name="company" placeholder="학교/회사명을 입력하세요." style="width: 228px;">
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="TA_grade">학년</label>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<input type="text" id="grade" name="grade" style="width: 93px;">
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="TA_parent">보호자 성함</label>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<input type="text" id="protector" name="protector" style="width: 228px;">
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">
+												<label for="TA_parentmobile">보호자휴대전화</label>
+											</th>
+											<td>
+												<span class="formElement"> 
+													<select title="휴대전화 앞번호 선택" style="width: 88px;" id="ptecMobileNo1" name="ptecMobileNo1" data_TA_mobileNo1="">
+														<option value="" selected="selected">선택</option>
+														<option value="010">010</option>
+														<option value="011">011</option>
+														<option value="016">016</option>
+														<option value="017">017</option>
+														<option value="018">018</option>
+														<option value="019">019</option>
+													</select>
+												</span>
+												<span class="formElement"> 
+													<input type="number" title="휴대전화 중간번호 입력" style="width: 93px;" id="ptecMobileNo2" 	name="ptecMobileNo2" data_TA_parentmobileNo2="" max="9999">
+												</span> 
+												<span class="formElement"> 
+													<input type="number" title="휴대전화 마지막번호 입력" style="width: 93px;" id="ptecMobileNo3" name="ptecMobileNo3" data_TA_parentmobileNo3="" max="9999">
+												</span>
+												<p class="formElement">
+													<input type="checkbox" name="protectorAgree" id="protectorAgree" value=""> 
+													<label for="protectorAgree" value="" class="checkbox">SMS수신	동의</label>
+												</p>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">가입경로</th>
+											<td>
+												<span class="formElement"> 
+													<select title="가입경로" style="width: 228px;" id="joinPath" name="joinPath">
+														<option value="" selected="selected">선택</option>
+														<option value="친구소개">친구소개</option>
+														<option value="SNS">SNS</option>
+														<option value="신문광고">신문광고</option>
+														<option value="플랜카드">플랜카드</option>
+														<option value="학원 간판">학원 간판</option>
+														<option value="기타">기타</option>
+													</select>
+												</span>
+											</td>
+										</tr>
+										<tr>
+											<th scope="row">주소</th>
+											<td>
+												<span class="formElement"> 
+													<input type="text" id="zipCode" name="zipCode" placeholder="" style="width: 200px;" maxlength="6" data_TA_adress="">
+												</span>
+												<span class="btnTable">
+													<a href="#none" onclick="execDaumPostcode()" id="checkTA_adress">우편번호찾기</a>
+												</span>
+												<p style="margin-top: 10px">
+													<span class="formElement">
+														<input type="text" id="address01" name="address01" placeholder="" style="width: 290px;" maxlength="" data_TA_id="">
+													</span>
+													<span class="formElement"><input type="text" id="address02" name="address02" placeholder="" style="width: 290px;" maxlength="" data_TA_id=""></span>
+												</p>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div id="teacherInfoContainer">
+								<h4>교수정보</h4>
+								<div class="table">
+									<table>
+										<caption>교수정보</caption>
+										<colgroup>
+											<col style="width:20%;">
+											<col style="width:*;">
+										</colgroup>
+										<tbody>
+											<tr>
+												<th scope="row">
+													<label for="teacher">직책</label>
+												</th>
+												<td>
+													<span class="formElement"> 
+														<input type="text" id="jobPosition" name="jobPosition" placeholder="직책을 입력하세요." style="width: 328px;">
+													</span>													
+												</td>
+											</tr>
+											<tr>
+												<th scope="row">
+													<label for="teacherintro">교수소개</label>
+												</th>
+												<td>
+													<span class="formElement"> 
+														<input type="text" id="teacherInfo" name="teacherInfo" placeholder="교수소개 내용을 입력하세요." style="width: 328px;">
+													</span>														
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div> 
+							</div>							
+							<div class="btnWrap center">
+								<span class="btnLarge">
+									<button type="submit">확인</button>
+								</span> 
+								<span class="btnLarge light">
+									<a th:href="@{/}" style="height: 46px">취소</a>
+								</span>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

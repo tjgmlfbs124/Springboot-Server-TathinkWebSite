@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	
+	var selectId = /*[[${selectId}]]*/
+	
+	if(selectId == "")
+	{
+		search("NAME", "", "0");
+	}
+	else
+	{
+		search("ID", selectId, "0");
+	}
+});
+
+var gSearchOption = "";
+var gSearchWord = "";
+
+
+function searchPage(page)
+{
+	search(gSearchOption, gSearchWord, page);
+}
+
+function search(option, word, page)
+{
+	var reqObj = new Object();
+	
+	
+	
+	gSearchOption = option;
+	gSearchWord = word;
+	
+    reqObj.option = option;
+    reqObj.word = word;
+    reqObj.pageIdx = page;
+        
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/listTeacher}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(function (data)
+    {      	
+    	var responseData = JSON.parse(data);
+        
+      	if(!responseData)
+      	{
+         	alert("세션이 만료되어 재접속이 필요합니다.");
+         	return false;
+      	}    
+      	
+      	if(responseData.error != null)
+      	{
+         	alert(responseData.error);
+         	return false;
+      	} 
+      	
+      	clearMember();
+            	
+      	for(i = 0; i < responseData.memberList.length; i ++)
+    	{
+      		addMember(responseData.memberList[i]);
+    	}
+      	
+        if(responseData.pageCnt != 0)
+        {
+          addPaginate(responseData);
+        }
+
+    });
+    
+    request.fail(function(jqXHR, textStatus){ 
+        alert(textStatus);
+    });
+}
+
+function clearMember()
+{
+    var memberListContainer = document.getElementById("memberListContainer");
+    var paginate = document.getElementById("paginate");	
+    
+    memberListContainer.innerHTML = "";
+    paginate.innerHTML = "";
+}
+
+function addMember(memberData)
+{
+	var memberListContainer = document.getElementById('memberListContainer')
+  	var row = document.createElement("div");
+	var name = document.createElement("h1");
+	var photoContainer = document.createElement("div");
+	var photoContainerChild = document.createElement("div");
+	var photo = document.createElement("img");
+	var infoContainer = document.createElement("div");
+	var infoJobPositionHeader = document.createElement("h2");
+	var infoJobPosition = document.createElement("div");
+	var infoContentHeader = document.createElement("h2");
+	var infoContent = document.createElement("div");
+	
+	row.setAttribute("style", "overflow:hidden;height:auto;margin-top:30px;");
+	row.setAttribute("class", "taTC");
+
+	photoContainer.setAttribute("class", "leftCon");
+	photoContainerChild.setAttribute("class", "join_photo");
+	photo.setAttribute("width", "133");
+	photo.setAttribute("height", "163");
+	infoContainer.setAttribute("class", "rightCon");
+	infoJobPosition.setAttribute("class", "info");
+	infoContent.setAttribute("class", "info");
+	    
+	name.textContent = memberData.realname;
+	
+	var rootPath = /*[[@{/}]]*/
+	
+	if(rootPath+memberData.imgPath != null && rootPath+memberData.imgPath.length > 1)
+	{
+		photo.src="";
+	}
+	else
+	{
+		photo.src = rootPath+memberData.imgPath.substr(1);
+	}
+	
+	infoJobPositionHeader.innerHTML = "직책";
+	infoJobPosition.textContent = memberData.jobPosition;
+	infoContentHeader.innerHTML = "교수소개";
+	infoContent.textContent = memberData.teacherInfo;
+	
+	infoContent.innerHTML = infoContent.innerHTML.replace(/\n\r?/g, '<br />');
+	
+	row.appendChild(name);
+	photoContainerChild.appendChild(photo);
+	photoContainer.appendChild(photoContainerChild);
+	row.appendChild(photoContainer);
+	infoContainer.appendChild(infoJobPositionHeader);
+	infoContainer.appendChild(infoJobPosition);
+	infoContainer.appendChild(infoContentHeader);
+	infoContainer.appendChild(infoContent);
+	row.appendChild(infoContainer);
+	memberListContainer.appendChild(row);
+}
+
+function addPaginate(pageData)
+{	
+	var paginate = document.getElementById("paginate");
+	var first  = document.createElement("a");
+	
+	first.setAttribute("class", "first");
+  	first.setAttribute("href", "javascript:{}");
+  	first.setAttribute("onclick", "searchPage('0');");
+  	first.innerHTML="맨처음으로";
+  	paginate.appendChild(first);
+  	    
+  	if(!(pageData.currPageIdx < 6))
+  	{
+    	var pre = document.createElement("a");
+    	pre.setAttribute("class", "pre");
+    	pre.setAttribute("href", "javascript:{}");
+    	pre.setAttribute("onclick", "searchPage('"+(pageData.startPageIdx-2)+"');");
+    	pre.innerHTML="이전페이지";
+    	paginate.appendChild(pre);
+  	}   
+  
+  	var pageBox  = document.createElement("div");
+  	paginate.appendChild(pageBox);
+  
+  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+  	{
+    	if(i!=pageData.currPageIdx)
+    	{
+      		var p  = document.createElement("a");
+      		p.setAttribute("href", "javascript:{}");
+      		p.setAttribute("onclick", "searchPage('"+(i-1)+"');");
+      		p.innerHTML=""+i;
+      
+      		pageBox.appendChild(p);
+    	}
+    	else
+    	{
+      		var s  = document.createElement("strong");
+      		s.setAttribute("href", "javascript:{}");
+      		s.setAttribute("onclick", "searchPage('"+(i-1)+"');");
+      		s.innerHTML=""+i;
+      		pageBox.appendChild(s);
+    	}
+  	}    
+   	
+  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+  	{
+    	var next = document.createElement("a");
+    	next.setAttribute("class", "next");
+    	next.setAttribute("href", "javascript:{}");
+    	next.setAttribute("onclick", "searchPage('"+pageData.endPageIdx+"');");
+    	next.innerHTML="다음페이지";
+    	paginate.appendChild(next);
+  	}  
+  
+  	var last   = document.createElement("a");
+  	last.setAttribute("class", "last");
+  	last.setAttribute("href", "javascript:{}");
+  	last.setAttribute("onclick", "searchPage('"+(pageData.pageCnt-1)+"');");
+  	last.innerHTML="맨마지막";
+  	paginate.appendChild(last);
+}
+</script>
+</head>
+
+<body>
+	<div id="wrap"> 
+		<div th:replace="header :: contents"></div>
+		<div id="container"> 
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>교수진 소개</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think!</span>
+					<div class="place"><span><a th:href="@{/}">Home</a></span> > 교수진 소개 > T. A. Think 선생님</div>
+				</div>
+			</div>
+			<div id="contents_container"> 
+				<div class="lnb">
+					<div th:replace="teacher/teacherLnb :: contents"></div>
+				</div>
+				<div class="subcontents">
+					<h3>T. A. Think 선생님</h3>
+					<div class="tableTop">
+						<!-- <p class="count">Total : <span class="red">000</span> 건</p> -->
+						<div class="searchTable">
+							<span class="formElement">
+								<select id="searchOption" name="searchOption" title="" style="width:100px;">
+									<option value="NAME" 	th:selected="${memberSearchOption=='NAME'}">성명</option>
+									<option value="ID" 		th:selected="${memberSearchOption=='ID'}">아이디</option>
+								</select>
+         					</span>
+							<div class="search">
+								<input type="text" id="searchWord" name="searchWord" title="" th:value="${memberSearchWord}" style="width:100px;">
+								<button onclick="search(document.getElementById('searchOption').value, document.getElementById('searchWord').value, '0');" >검색하기</button>
+							</div>
+						</div>
+					</div> 
+					<div id="memberListContainer" style="overflow:hidden;height:auto;">
+					</div>
+					<div class="paginate" id="paginate"></div>   
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

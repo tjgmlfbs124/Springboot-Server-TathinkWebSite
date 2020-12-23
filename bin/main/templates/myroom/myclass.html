@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/smartEditor/js/HuskyEZCreator.js}" charset="utf-8"></script>
+<script type="text/javascript" th:src="@{/smartEditor/js/myeditor.js}" th:inline="javascript"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});	
+	
+	var member = /*[[${member}]]*/;
+	
+	if(member.level=="LEVEL_MEMBER"){
+		search01("ALL","", 0);
+		search02("ALL","", 0);
+		search03("ALL","", 0);	
+	}
+	if(member.level=="LEVEL_TEACHER"||member.level=="LEVEL_ADMIN"){
+		search04("ALL","", 0);
+		search05("ALL","", 0);
+		search06("ALL","", 0);	
+	}
+		
+	$('.present').click();
+});
+
+
+function gotoClassRoom(classSeq, courseSeq){
+	var offlineClass =/*[[${class}]]*/;
+	location.href = "../myroom/classroom?classSeq="+ classSeq + "&courseSeq=" + courseSeq;
+}
+</script>
+</head>
+
+<body>
+	<div id="wrap"> 
+		<div th:replace="header :: contents"></div>
+		<div id="container"> 
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>나의 강의실</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think</span>
+					<div class="place">
+						<span><a th:href="@{/}">Home</a></span> > 나의 강의실 > 수강현황
+					</div>
+				</div>
+			</div>
+			<div id="contents_container"> 
+				<div class="lnb">
+					<div th:replace="myroom/myroomLnb :: contents"></div>
+				</div>
+      			<div class="subcontents">
+      				<h3 th:if="${member != null && (member.level == 'LEVEL_MEMBER')}">수강현황</h3>
+      				<h3 th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}">강의현황</h3>
+					<div class="tab type5">
+						<ul th:if="${member != null && (member.level == 'LEVEL_MEMBER')}" >
+							<li><a href="#service1">신청중인강좌</a></li>
+							<li class="present"><a href="#service2">수강중인강좌</a></li>
+							<li><a href="#service3">수강종료된강좌</a></li>
+						</ul>
+						<ul th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}" >
+							<li><a href="#service4">신청중인강좌</a></li>
+							<li class="present"><a href="#service5">강의중인강좌</a></li>
+							<li><a href="#service6">강의종료된강좌</a></li>
+						</ul>						
+					</div>
+					<div th:if="${member != null && (member.level == 'LEVEL_MEMBER')}" class="tabContWrap">
+						<div th:replace="myroom/myclassTab01 :: myclassTab01"></div> 
+						<div th:replace="myroom/myclassTab02 :: myclassTab02"></div>
+						<div th:replace="myroom/myclassTab03 :: myclassTab03"></div>
+					</div>
+					<div th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}" class="tabContWrap">
+						<div th:replace="myroom/myclassTab04 :: myclassTab04"></div> 
+						<div th:replace="myroom/myclassTab05 :: myclassTab05"></div>
+						<div th:replace="myroom/myclassTab06 :: myclassTab06"></div>
+					</div>					
+      			</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

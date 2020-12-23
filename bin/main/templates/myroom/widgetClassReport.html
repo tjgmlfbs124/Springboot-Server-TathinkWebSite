@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+		<div th:fragment="contents" class="modal" id="downloadReportDlg" style="display:none">
+			<form id="reportDownloadForm" name="downloadForm" th:action="@{/api/downloadClassReport}" method='POST'>
+				<input type="hidden" id="reportFilePath" name="filePath" value="">
+			</form>		
+			<div id="listReportBox" class="modal-content">
+				<h3 id="reportClassTitle"></h3>
+				<h4 id="reportClassUser"></h4>
+				<div class="tbList">
+					<table border="1" cellspacing="0" summary="과제제출리스트">
+						<caption>과제제출리스트</caption>
+						<colgroup>
+							<col width="140">
+							<col width="">
+						</colgroup>
+						<tbody>
+							<tr>
+								<th scope="row">
+									<label for="TA_addfile">첨부파일</label>
+								</th>
+								<td>         
+									<div id="reportBoxAttField"></div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div> 
+			</div>
+		</div>	
+</body>
+</html>
+
