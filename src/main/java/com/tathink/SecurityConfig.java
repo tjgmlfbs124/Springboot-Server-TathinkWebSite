@@ -89,6 +89,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		antMatchers("/api/listQna").permitAll().
 		antMatchers("/api/viewQna").permitAll().
 		antMatchers("/api/downloadNoticeFile").permitAll().
+		antMatchers("/coding").permitAll(). // 코딩 페이지 로그인 필요??
 		antMatchers("/**").authenticated()
 		.and().formLogin().loginPage("/join/login").defaultSuccessUrl("/").failureUrl("/join/login?error=true")
 		.and().logout().logoutRequestMatcher(new AntPathRequestMatcher("/join/logout")).logoutSuccessUrl("/");
