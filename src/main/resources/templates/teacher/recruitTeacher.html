@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+});
+
+</script>
+</head>
+
+<body>
+	<div id="wrap"> 
+		<div th:replace="header :: contents"></div>
+		<div id="container"> 
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>교수진 소개</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think!</span>
+					<div class="place"><span><a th:href="@{/}">Home</a></span> > 교수진 소개 > 강사모집</div>
+				</div>
+			</div>
+			<div id="contents_container"> 
+				<div class="lnb">
+					<div th:replace="teacher/teacherLnb :: contents"></div>
+				</div>
+				<div class="subcontents">
+					<h3>선생님 모집</h3>
+					<div class="intro">
+						<span style="display:block; font-size:32px;margin-bottom:px; font-weight:normal" class="blue">T. A. Think와 함께하실 선생님을 모십니다.</span>
+						<span style="font-size:px;">(주)T. A. Think는 올바른 코딩교육을 위한 온∙오프라인 교육을 제공하여 미래 시대에 적합한 인재 양성을 목표로 합니다.<br>미래인재양성에 관심있는 선생님들께 T. A. Think의 문은 활짝 열려 있습니다. </span>
+        			</div>
+       	 			<div class="intro teacher"><h2 class="intro">강사지원 자격</h2>
+        				<ul>
+         					<li>컴퓨터공학 전공자</li>
+         					<li>코딩 관련분야 강의 경험자(대학, 학교, 학원, 기타 교육기관)</li>
+         					<li>실무경력 00년 이상의 경력자</li>
+        				</ul>
+        				<h2 class="intro">강사지원 방법</h2>
+        				<span style="display:block; font-size:20px;">전화 : 053-246-9950 </span>
+						<span style="display:block; font-size:20px;">이메일 : chw@tathink.co.kr</span>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

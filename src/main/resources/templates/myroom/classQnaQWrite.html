@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="writeBox" style="display:none;">
+<script th:inline="javascript">
+	var writeBox = document.getElementById("writeBox");
+	
+	function hideQnaQWrite()
+	{
+		writeBox.style.display="none";
+		removeMyEditer();
+		location.href = "#contents_container";
+	}
+	
+	function showQnaQWrite(seq, title, content, bSec)
+	{
+		var writeBoxSeq = document.getElementById("writeBoxSeq");
+		var writeBoxTitle = document.getElementById("writeBoxTitle");
+		var writeBoxPublic = document.getElementById("writeBoxPublic");
+		var writeBoxPrivate = document.getElementById("writeBoxPrivate");
+		
+		var classSeq = document.getElementById("classQnaQSeq");	
+		
+		classSeq.value = /*[[${class.seq}]]*/;
+		
+		createMyEditer("writeBoxQuestion", "writeBoxConfirm", "writeBoxForm", content, /*[[@{/smartEditor/SmartEditor2Skin}]]*/);
+
+		writeBoxSeq.value = seq;
+		writeBoxTitle.value = title;
+		if(bSec == true)
+		{
+			writeBoxPrivate.checked = true;
+		}
+		else
+		{
+			writeBoxPublic.checked = true;
+		}
+		
+		writeBox.style.display="block";
+		location.href = "#writeBox";
+	}
+	
+	function onClickQWriteCancle()
+	{
+		hideQnaQWrite();
+		
+		if(isHideQnaListBox())
+			searchQnA(gSearchQnAOption, gSearchQnAWord, gSearchQnAPageIdx);
+	}
+</script>
+	<h4>Q&amp;A 글쓰기</h4>
+	<form name="writeBoxForm" id="writeBoxForm" th:action="@{/myroom/classQnaWrite}" onsubmit="return true;" method="post" enctype="multipart/form-data">   
+		<input type="hidden" id="writeBoxSeq" name="seq" value="" >
+		<input type="hidden" id="classQnaQSeq" name="classSeq" >
+		<div class="table">
+			<table>
+				<caption>QnA글쓰기</caption>
+				<colgroup>
+					<col style="width:200px">
+					<col style="width:">
+				</colgroup>
+				<tbody>
+					<tr>
+						<th scope="row"><label for="qTitle">제목</label></th>
+						<td>
+							<span class="formElement">
+								<input type="text" id="writeBoxTitle" name="qTitle" placeholder="제목을 입력하세요." style="width:500px;" maxlength="" data_TA_id="" >
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">공개설정</th>
+						<td>
+							<span class="formElement">
+								<input type="radio" name="bSec" id="writeBoxPublic" value=false onclick="" checked="false">
+								<label for="TA_open" value="" class="radio">공개</label>
+							</span> 
+							<span class="formElement">
+								<input type="radio" name="bSec" id="writeBoxPrivate" value=true onclick="" checked="true">
+								<label for="TA_secret" value="" class="radio">비공개</label>
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2" scope="row" style="width: 750px;">
+							<textarea name="qContent" id="writeBoxQuestion" title="글쓰기" style="width: 750px; height:400px;"></textarea>
+						</td>
+					</tr>
+					
+				</tbody>
+			</table>
+		</div>
+		<div class="btnWrap"> 
+		    <span class="btnLarge light"><a href="javascript:{}" onclick="onClickQWriteCancle(); ">취소</a></span>
+		    <span class="btnLarge"><button id="writeBoxConfirm" type="button">확인</button></span> 
+		</div>
+	</form>
+</div>
+</body>
+</html>

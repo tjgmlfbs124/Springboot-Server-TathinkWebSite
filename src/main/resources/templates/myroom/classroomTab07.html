@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="classroomTab07" class="tabCont" id="service7" style="display:none;">
+<script th:inline="javascript">
+var memberListBox = null;
+
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	
+	memberListBox = document.getElementById("memberListBox");
+		
+	searchMember("NAME","", 0);
+});
+
+function showMemberListBox()
+{
+	memberListBox.style.display="block";
+}
+
+function hideMemberListBox()
+{
+	memberListBox.style.display="none";
+}
+
+var gSearchMemberWord = "";
+var gSearchMemberOption = "NAME";
+var gSearchMemberPageIdx= 0;
+
+function searchMemberPage(page)
+{
+	searchMember(gSearchMemberOption, gSearchMemberWord, page);
+}
+
+function searchMember(option, word, page)
+{	
+	var reqObj = new Object();
+	
+	gSearchMemberWord = word;
+	gSearchMemberOption = option;
+	gSearchMemberPageIdx = page;
+	
+	reqObj.classSeq = /*[[${class.seq}]]*/;
+    reqObj.word = word;
+    reqObj.option = option;
+    reqObj.pageIdx = page;
+        
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/listClassMemberInfo}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(makeMemberList);
+    
+    request.fail(function(jqXHR, textStatus){ 
+        alert(textStatus);
+    });
+}
+
+function makeMemberList(data)
+{
+	var responseData = JSON.parse(data);
+    
+  	if(!responseData)
+  	{
+     	alert("세션이 만료되어 재접속이 필요합니다.");
+     	return false;
+  	}      
+  	
+  	if(responseData.error != null)
+  	{
+     	alert(responseData.error);
+     	return false;
+  	}
+  	
+  	clearMemberInfo();
+
+  	var totalMemberCnt = document.getElementById("totalMemberCnt");
+  	totalMemberCnt.innerHTML = "Total : <span class='red'></span>"+responseData.offlineClassMemberList.length+"건";
+  	
+  	if(responseData.offlineClassMemberList.length>0)
+  		document.getElementById("listMemberEmpty").style.display="none";
+  	for(i = 0; i < responseData.offlineClassMemberList.length; i ++)
+	{
+  		addMemberInfo(responseData.offlineClassMemberList[i]);
+	}
+  	
+    if(responseData.pageCnt != 0)
+    {
+      addMemberPaginate(responseData);
+    }
+}
+
+function clearMemberInfo()
+{
+    var memberInfoListContainer = document.getElementById("memberInfoListContainer");
+    var classMemberPaginate = document.getElementById("classMemberPaginate");
+    document.getElementById("listMemberEmpty").style.display="";
+
+    memberInfoListContainer.innerHTML = "";
+    classMemberPaginate.innerHTML = "";
+}
+
+function addMemberInfo(memberInfoData)
+{	
+	var memberInfoListContainer;
+	var row;
+	var realNameCell;	
+	var usernameCell;
+	var mobileCell;
+	var protectorMobileCell;
+	
+	var ahref = document.createElement("a");
+	
+	memberInfoListContainer = document.getElementById("memberInfoListContainer");
+  	row = memberInfoListContainer.insertRow();
+  	
+	realNameCell   = row.insertCell(0);	
+	usernameCell   = row.insertCell(1);
+	mobileCell   = row.insertCell(2);
+	protectorMobileCell   = row.insertCell(3);
+	
+	realNameCell.setAttribute("class", "alcenter");
+	realNameCell.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 500px;white-space: nowrap;");
+	realNameCell.textContent = memberInfoData.realname;
+	realNameCell.innerHTML = realNameCell.innerHTML.replace(/\n\r?/g, '<br />');
+	
+	ahref.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 300px;white-space: nowrap; font-weight:bold;cursor:pointer");
+	ahref.innerHTML = memberInfoData.username;
+	usernameCell.setAttribute("class", "alcenter");
+	usernameCell.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 500px;white-space: nowrap;");
+	usernameCell.appendChild(ahref);
+	usernameCell.innerHTML = usernameCell.innerHTML.replace(/\n\r?/g, '<br />');
+  	  	
+  	mobileCell.textContent = memberInfoData.mobile;
+  	mobileCell.setAttribute("class", "alcenter");
+  	protectorMobileCell.textContent = memberInfoData.protectorMobile;
+  	protectorMobileCell.setAttribute("class", "alcenter");
+  	
+  	usernameCell.onclick=function()
+	{
+  		hideMemberListBox();
+		showMemberView(memberInfoData.username);
+		showMyClassView(memberInfoData.username);
+	};
+}
+
+function addMemberPaginate(pageData)
+{	
+	var classMemberPaginate = document.getElementById("classMemberPaginate");
+	var first  = document.createElement("a");
+	
+	first.setAttribute("class", "first");
+  	first.setAttribute("href", "javascript:{}");
+  	first.setAttribute("onclick", "searchMemberPage('0');");
+  	first.innerHTML="맨처음으로";
+  	classMemberPaginate.appendChild(first);
+  	    
+  	if(!(pageData.currPageIdx < 6))
+  	{
+    	var pre = document.createElement("a");
+    	pre.setAttribute("class", "pre");
+    	pre.setAttribute("href", "javascript:{}");
+    	pre.setAttribute("onclick", "searchMemberPage('"+(pageData.startPageIdx-2)+"');");
+    	pre.innerHTML="이전페이지";
+    	classMemberPaginate.appendChild(pre);
+  	}   
+  
+  	var pageBox  = document.createElement("div");
+  	classMemberPaginate.appendChild(pageBox);
+  
+  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+  	{
+    	if(i!=pageData.currPageIdx)
+    	{
+      		var p  = document.createElement("a");
+      		p.setAttribute("href", "javascript:{}");
+      		p.setAttribute("onclick", "searchMemberPage('"+(i-1)+"');");
+      		p.innerHTML=""+i;
+      
+      		pageBox.appendChild(p);
+    	}
+    	else
+    	{
+      		var s  = document.createElement("strong");
+      		s.setAttribute("href", "javascript:{}");
+      		s.setAttribute("onclick", "searchMemberPage('"+(i-1)+"');");
+      		s.innerHTML=""+i;
+      		pageBox.appendChild(s);
+    	}
+  	}    
+   	
+  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+  	{
+    	var next = document.createElement("a");
+    	next.setAttribute("class", "next");
+    	next.setAttribute("href", "javascript:{}");
+    	next.setAttribute("onclick", "searchMemberPage('"+pageData.endPageIdx+"');");
+    	next.innerHTML="다음페이지";
+    	classMemberPaginate.appendChild(next);
+  	}  
+  
+  	var last   = document.createElement("a");
+  	last.setAttribute("class", "last");
+  	last.setAttribute("href", "javascript:{}");
+  	last.setAttribute("onclick", "searchMemberPage('"+(pageData.pageCnt-1)+"');");
+  	last.innerHTML="맨마지막";
+  	classMemberPaginate.appendChild(last);
+}
+
+function onClickMemberSearch()
+{
+	var searchMemberValue = document.getElementById("searchMemberValue");
+	var searchMemberType = document.getElementById("searchMemberType");
+	
+	searchMember(searchMemberType.value, searchMemberValue.value, 0);
+}
+
+</script>  			
+	<div id="memberListBox">     			
+		<div class="tableTop">
+			<p id="totalMemberCnt" class="count"></p>
+			<div class="searchTable"> 
+				<span class="formElement">
+					<select id="searchMemberType" style="width:115px;">
+						<option value="NAME">성명</option>
+						<option value="ID">아이디</option>
+						<option value="NUMBER">휴대전화번호</option>
+					</select>
+				</span>
+				<div class="search">
+					<input type="text" id="searchMemberValue">
+					<button type="submit" id="searchMemberAction" name="searchMemberAction" onclick="onClickMemberSearch();">검색하기</button>
+				</div>
+			</div>
+		</div>
+		<div class="tbList">
+			<table border="1" cellspacing="0" summary="수강생 리스트">
+				<caption>수강신청리스트</caption>
+				<colgroup>
+					<col width="200px">
+					<col width="">
+					<col width="200px">
+					<col width="200px">
+				</colgroup>
+				<thead>
+					<tr>
+						<th scope="col">성명</th>
+						<th scope="col">아이디</th>
+						<th scope="col">휴대전화</th>
+						<th scope="col">보호자휴대전화</th>
+					</tr>
+				</thead>
+				<tbody id="memberInfoListContainer"></tbody>
+			</table>
+		</div>
+		<div id = "listMemberEmpty" style="text-align:center;">정보가 없습니다.</div> 					  	
+		<div id="classMemberPaginate" class="paginate"></div>
+	</div>
+	<div th:replace="myroom/classMemberView :: contents"></div>
+</div>
+</body>
+</html>

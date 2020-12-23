@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+	<div th:fragment="classroomTab01" class="tabCont" id="service1" style="display:none;">
+<script th:inline="javascript">
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	
+	var lesson = /*[[${listLesson}]]*/;
+	if(lesson.length<=0){
+		document.getElementById("lessonEmpty").style.display="";
+	}else{
+		document.getElementById("lessonEmpty").style.display="none";
+	}
+});
+
+</script>
+    	<h4>학습현황</h4>
+       	<div class="tb02">
+           	<table width="100%" class="tb02" border="1" cellspacing="0" summary="학습현황">
+                <caption>학습현황 </caption>
+                <colgroup>
+                <col width="140">
+                <col>
+                <col width="140">
+                <col width="">
+                </colgroup>
+                <tbody>
+                	<tr>
+	                    <th th:if="${member != null && member.level == 'LEVEL_MEMBER'}" scope="row">수강상태</th>
+	                    <th th:if="${member != null && member.level == 'LEVEL_TEACHER'}" scope="row">강의상태</th>
+	                    <td><span id="classState" name="classState" class="blue">수강중</span></td>
+	                    <th scope="row">남은 일수</th>
+	                    <td><span id="classRemain" name="classRemain" class="blue">00일</span></td>
+	                </tr>
+	                <tr>
+	                    <th scope="row">학습 시작일</th>
+	                    <td th:if="${class != null}" ><th:block th:text="${class.startStudyDate}" /></td>
+	                    <th scope="row">학습 종료일</th>
+	                    <td th:if="${class != null}" ><th:block th:text="${class.endStudyDate}" /></td>
+                	</tr>
+            	</tbody>
+        	</table>
+		</div> 		
+		<div class="tb01">
+			<table border="1" cellspacing="0" summary="수업목차">
+				<caption>수업목차 </caption>
+				<colgroup>
+					<col width="80px">
+					<col width="">
+				</colgroup>
+				<thead>
+					<tr>
+						<th scope="colgroup">차시</th>
+						<th scope="col">강의내용</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="lessonData : ${listLesson}">
+						<th scope="row"><th:block th:text="${lessonData.lessonOrder}" /></th>
+						<td class="classinfo"><th:block th:text="${lessonData.content}" /></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div id = "lessonEmpty" style="text-align:center;">정보가 없습니다.</div>				
+		<div id="paginate01" class="paginate"></div>
+	</div>
+</body>
+</html>

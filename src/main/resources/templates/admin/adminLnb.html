@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+</head>
+
+<body>                                                
+	<div th:fragment="contents" class="lnb_menu" id="lnb_menu">
+		<ul>
+			<li><a th:href="@{/admin/listCourseInfo}" 	th:classappend="${pageName} == 'listCourseInfo'?on:none">과목관리</a></li>		
+			<li><a th:href="@{/admin/listClassInfo}" 	th:classappend="${pageName} == 'listClassInfo'?on:none">강좌관리</a></li>
+			<li><a th:href="@{/admin/listMemberInfo}" 	th:classappend="${pageName} == 'listMemberInfo'?on:none">회원등급 관리</a></li>
+			<li><a th:href="@{/admin/listKitInfo}" 		th:classappend="${pageName} == 'listKitInfo'?on:none">교보재관리</a></li>
+			<li><a th:href="@{/admin/listClassApply}" 	th:classappend="${pageName} == 'listClassApply'?on:none">수강신청관리</a></li>
+		</ul>
+	</div>
+</body>
+</html>

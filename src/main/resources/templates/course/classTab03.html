@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+	<meta charset="utf-8"/>
+	<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+	<meta http-equiv="Content-Style-Type" content="text/css"/>
+	</head>
+	
+	<body>
+		<div th:fragment="classTab03" class="tabCont" id="service3" style="display:none;">
+<script th:inline="javascript">	
+	$(document).ready(function(){ 
+		$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+		
+		searchReview("ALL","", 0);		
+	});
+	
+	var gSearchReviewWord = "";
+	var gSearchReviewOption = "ALL";
+	var gSearchReviewPageIdx= 0;
+		
+	function searchReviewPage(page)
+	{
+		searchReview(gSearchReviewOption, gSearchReviewWord, page);
+	}
+	
+	function searchReview(option, word, page)
+	{	
+		var reqObj = new Object();
+		
+		gSearchReviewWord = word;
+		gSearchReviewOption = option;
+		gSearchReviewPageIdx = page;
+		
+		reqObj.classSeq = /*[[${class.seq}]]*/;
+	    reqObj.word = word;
+	    reqObj.option = option;  
+	    reqObj.pageIdx = page;
+	    
+	    var request = $.ajax({url: /*[[@{/api/listClassReview}]]*/, type : "post", data : reqObj, dataType: "text"});
+	    
+	    request.done(makeListReview);    
+	    request.fail(function(jqXHR, textStatus){alert(textStatus);});
+	}
+	
+	function makeListReview(data)
+	{
+		var responseData = JSON.parse(data);
+	    
+	  	if(!responseData)
+	  	{
+	     	alert("세션이 만료되어 재접속이 필요합니다.");
+	     	return false;
+	  	}      
+	  	
+	  	if(responseData.error != null)
+	  	{
+	     	alert(responseData.error);
+	     	return false;
+	  	}      
+	  	
+	  	clearReview();
+	  	
+	  	var totalReviewCnt = document.getElementById("totalReviewCnt");
+	  	totalReviewCnt.innerHTML = "Total : <span class='red'></span>"+responseData.reviewList.length+"건";
+	  	
+	  	if(responseData.reviewList.length>0)
+	  		document.getElementById("reviewEmpty").style.display="none";
+	  	
+	  	for(i = 0; i < responseData.reviewList.length; i ++)
+		{
+	  		addReview(responseData.reviewList[i]);
+		}
+	  	
+	    if(responseData.pageCnt != 0)
+	    {
+	      addReviewPaginate(responseData);
+	    }
+	    	
+	}
+	
+	function clearReview()
+	{
+	    var reviewListContainer = document.getElementById("reviewListContainer");
+	    var reviewPaginate = document.getElementById("reviewPaginate");	    
+	    document.getElementById("reviewEmpty").style.display="";
+	    
+	    reviewListContainer.innerHTML = "";
+	    reviewPaginate.innerHTML = "";
+	}
+	
+	function addReview(reviewData)
+	{	
+		var reviewListContainer;
+		var row;
+		var checkCell;
+		var reviewCell;
+		var pointCell;
+	
+		reviewListContainer = document.getElementById("reviewListContainer");
+	  	row = reviewListContainer.insertRow();
+	  	
+  		pointCell   = row.insertCell(0);
+  		reviewCell   = row.insertCell(1);
+  		
+		  	
+	  	var starScore = document.createElement("div");
+	  	starScore.setAttribute("class", "score_star");
+	  	
+	  	var score = document.createElement("span");
+	  	score.setAttribute("class", "score0"+reviewData.point);
+	  	score.innerHTML = "별점" + reviewData.point + "점"
+	  	
+	  	starScore.appendChild(score);	  	
+	  	pointCell.appendChild(starScore);
+	  	
+	  	var reviewContent = document.createElement("div");
+	  	reviewContent.setAttribute("class", "score_reple");
+	  	
+	  	var writer = document.createElement("span");
+	  	writer.setAttribute("style", "font-size:12px;font-weight:bold;color:#999");
+	  	writer.innerHTML = reviewData.writerName + "("+reviewData.writer +")";
+	  	
+	  	var time = document.createElement("span");
+	  	//var date = new Date(reviewData.regDate);
+	  	time.setAttribute("style", "font-size:12px;color:#999");
+	  	time.innerHTML = "  "+convertDateTimeString(reviewData.regDate);
+	  	
+	  	var content = document.createElement("p");
+	  	content.innerHTML = reviewData.review;
+	  		  		  	
+	  	reviewContent.appendChild(content);
+	  	reviewContent.appendChild(writer);
+	  	reviewContent.appendChild(time);
+	  	
+	  	reviewCell.appendChild(reviewContent);
+	  	
+	}
+	
+	function addReviewPaginate(pageData)
+	{	
+		var reviewPaginate = document.getElementById("reviewPaginate");
+		var first  = document.createElement("a");
+		
+		first.setAttribute("class", "first");
+	  	first.setAttribute("href", "javascript:{}");
+	  	first.setAttribute("onclick", "searchReviewPage('0');");
+	  	first.innerHTML="맨처음으로";
+	  	reviewPaginate.appendChild(first);
+	  	    
+	  	if(!(pageData.currPageIdx < 6))
+	  	{
+	    	var pre = document.createElement("a");
+	    	pre.setAttribute("class", "pre");
+	    	pre.setAttribute("href", "javascript:{}");
+	    	pre.setAttribute("onclick", "searchReviewPage('"+(pageData.startPageIdx-2)+"');");
+	    	pre.innerHTML="이전페이지";
+	    	reviewPaginate.appendChild(pre);
+	  	}   
+	  
+	  	var pageBox  = document.createElement("div");
+	  	reviewPaginate.appendChild(pageBox);
+	  
+	  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+	  	{
+	    	if(i!=pageData.currPageIdx)
+	    	{
+	      		var p  = document.createElement("a");
+	      		p.setAttribute("href", "javascript:{}");
+	      		p.setAttribute("onclick", "searchReviewPage('"+(i-1)+"');");
+	      		p.innerHTML=""+i;
+	      
+	      		pageBox.appendChild(p);
+	    	}
+	    	else
+	    	{
+	      		var s  = document.createElement("strong");
+	      		s.setAttribute("href", "javascript:{}");
+	      		s.setAttribute("onclick", "searchReviewPage('"+(i-1)+"');");
+	      		s.innerHTML=""+i;
+	      		pageBox.appendChild(s);
+	    	}
+	  	}    
+	   	
+	  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+	  	{
+	    	var next = document.createElement("a");
+	    	next.setAttribute("class", "next");
+	    	next.setAttribute("href", "javascript:{}");
+	    	next.setAttribute("onclick", "searchReviewPage('"+pageData.endPageIdx+"');");
+	    	next.innerHTML="다음페이지";
+	    	reviewPaginate.appendChild(next);
+	  	}  
+	  
+	  	var last   = document.createElement("a");
+	  	last.setAttribute("class", "last");
+	  	last.setAttribute("href", "javascript:{}");
+	  	last.setAttribute("onclick", "searchReviewPage('"+(pageData.pageCnt-1)+"');");
+	  	last.innerHTML="맨마지막";
+	  	reviewPaginate.appendChild(last);
+	}
+	
+</script>	
+		<div id="reviewListBox">
+			<form>
+				<input type="hidden" id="seq" name="seq" value = "-1">			
+			</form>
+				<div class="tableTop">
+					<p id="totalReviewCnt" class="count"></p>
+				</div>
+				<div class="tbList">
+					<table border="1" cellspacing="0" summary="수강후기 리스트">
+						<caption>수강후기 리스트</caption>
+						<colgroup>
+							<col width="">
+							<col width="250px">
+						</colgroup>
+						<tbody id="reviewListContainer"></tbody>
+					</table>
+				</div>
+				<div id = "reviewEmpty" style="text-align:center;">정보가 없습니다.</div>
+				<div id="reviewPaginate" class="paginate"></div>
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<!--[if lt IE 9]>
+	<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+<![endif]-->
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready( function() {	
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	initClassInfo();
+});
+
+function initClassInfo(){
+	var cost = /*[[${class.cost}]]*/;
+	var capa = /*[[${class.capa}]]*/;
+	var startRegDate = /*[[${class.startRegDate}]]*/;
+	var endRegDate = /*[[${class.endRegDate}]]*/;
+	
+	if(cost =="0"){
+		document.getElementById("cost").innerHTML = "무료";
+	}else{
+		document.getElementById("cost").innerHTML = cost;
+	}
+	
+	if(capa =="0"){
+		document.getElementById("capa").innerHTML = "제한없음";
+	}else{
+		document.getElementById("capa").innerHTML = capa;
+	}
+	
+	if(startRegDate=="0001-01-01" && endRegDate=="9999-12-31"){
+		document.getElementById("regPeriod").innerHTML = "상시접수";
+	}else{
+		document.getElementById("regPeriod").innerHTML = startRegDate + " ~ " + endRegDate;
+	}
+}
+function ApplyClass()
+{
+	var member =/*[[${member}]]*/; 
+	
+	if(member==null){
+		alert("회원 로그인이 필요합니다.");
+		return;
+	}
+	
+	if(member.level!="LEVEL_MEMBER"){
+		alert("수강 신청할 수 없는 등급입니다.");
+		return;
+	}
+	
+	if(confirm("수강 신청하시겠습니까?")){				
+		var offlineClass =/*[[${class}]]*/;
+		
+		var reqObj = new Object();  
+	    reqObj.classSeq = offlineClass.seq;
+	    reqObj.username = member.username;
+	    reqObj.realname = member.realname;
+	    reqObj.mobile = member.mobile;
+	    reqObj.protectorMobile = member.protectorMobile;
+	    	    
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/reqOfflineClassAddMember}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.done(okAlert);
+	    
+	    request.fail(function(jqXHR, textStatus){alert(textStatus);});
+	}		
+}
+function okAlert(data){
+	var responseData = JSON.parse(data);
+    
+  	if(!responseData)
+  	{
+     	alert("세션이 만료되어 재접속이 필요합니다.");
+     	return false;
+  	}      
+  	
+  	if(responseData.error != null &&  responseData.error != "")
+  	{
+     	alert(responseData.error);
+     	return false;
+  	}
+  	alert("수강신청이 완료되었습니다.");
+  	
+  	var offlineClass =/*[[${class}]]*/;
+  	location.href = "../myroom/classroom?classSeq="+ offlineClass.seq + "&courseSeq=" + offlineClass.courseSeq;
+}
+function gotoClassRoom(){
+	var inClass = /*[[${inClass}]]*/
+	var memberLevel = /*[[${member.level}]]*/
+	if(memberLevel=="LEVEL_MEMBER"){
+		if(inClass==false){
+			alert("수강신청후 입장하실 수 있습니다.");
+			return;
+		}
+	}
+	var offlineClass =/*[[${class}]]*/;
+	location.href = "../myroom/classroom?classSeq="+ offlineClass.seq + "&courseSeq=" + offlineClass.courseSeq;
+}
+</script>
+</head>
+
+<body>
+<div id="wrap">
+	<div th:replace="header :: contents"></div>
+	<div id="container"> 
+		<div class="subhead">
+   			<div class="subtitle">
+     			<h2>강의소개</h2>
+     			<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think!</span>
+     			<div class="place">
+     				<span><a th:href="@{/}">Home</a></span>> 강의소개 > 코딩입문 > <th:block th:text="${course.courseName}" /> > <th:block th:text="${studyInfo.studyName}" />
+      			</div>
+   			</div>
+ 		</div>
+ 		<div id="contents_container">
+   			<div id="contents_container2">
+     			<div class="lnb">
+     				<div th:replace="course/courseLnb :: contents"></div>
+     			</div>
+     			<div class="subcontents">
+					<div class="courseintro"> 
+						<img th:src="@{${course.bigImgPath}}" width="825" height="240" alt="TAThink"/> 
+					</div>
+					<h3><th:block th:text="${studyInfo.studyName}" /></h3>
+        			<div class="tb02">
+						<table width="100%" class="tb02" border="1" cellspacing="0" summary="과목정보">
+							<caption>과목정보</caption>
+							<colgroup>
+								<col>
+								<col width="115">
+								<col>
+								<col width="115">
+								<col>
+							</colgroup>
+							<tbody>
+								<tr>
+									<td class="teacherimg" rowspan="4"><img th:src="@{${teacher.imgPath}}" width="130" height="163" alt=""/></td>
+									<th scope="row">담당교수</th>
+									<td><th:block th:text="${teacher.realname}" /></td>
+									<th scope="row">교육비</th>
+									<td id="cost"></td>
+								</tr>
+								<tr>
+									<th scope="row">신청기간</th>
+									<td id="regPeriod"></td>
+									<th scope="row">수강인원</th>
+									<td id="capa"></td>
+								</tr>
+								<tr>
+									<th scope="row">교육기간</th>
+									<td colspan="3"><th:block th:text="${class.startStudyDate}" /> ~ <th:block th:text="${class.endStudyDate}" /></td>
+								</tr>
+								<tr>
+									<th scope="row">교육시간</th>
+									<td colspan="3"><th:block th:text="${class.time}" /></td>
+								</tr>
+							</tbody>
+          				</table>
+        			</div>
+					<a name="epilogue"></a>
+					<div class="btnWrap" > 
+						<span class="btnLarge light"><button type="button" id="form01" onclick="ApplyClass()">수강신청</button></span>
+						<span class="btnLarge"><button type="button" id="form01" onclick="gotoClassRoom()">강의실입장</button></span>
+					</div>
+					<div class="tab type5">
+						<ul>
+							<li class="present"><a href="#service1">수업목차</a></li>
+							<li><a href="#service2">담당교수 소개</a></li>
+							<li><a href="#service3">수강후기</a></li>
+						</ul>
+					</div>
+					<div class="tabContWrap"> 
+						<div th:replace="course/classTab01 :: classTab01"></div>
+						<div th:replace="course/classTab02 :: classTab02"></div>
+						<div th:replace="course/classTab03 :: classTab03"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

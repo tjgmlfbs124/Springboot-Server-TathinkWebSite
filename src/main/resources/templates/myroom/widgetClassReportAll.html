@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+		<div th:fragment="contents" class="modal" id="downloadReportAllDlg" style="display:none">
+			<form id="reportDownloadAllForm" name="downloadAllForm" th:action="@{/api/downloadReportAll}" method='POST'>
+				<input type="hidden" id="classSeq" name="classSeq" value="">
+				<input type="hidden" id="homeworkSeq" name="homeworkSeq" value="">
+			</form>	
+			<div id="listReportAllBox" class="modal-content">
+				<h3 id="reportClassAllTitle"></h3>
+				<div class="btnWrap02" style="background:none">
+					<span class="btnBasic blue btnright">
+						<button type="button"  onclick="downloadReportAll();">첨부파일 일괄다운로드</button>
+					</span>
+				</div>
+				<div class="tbList">
+					<table border="1" cellspacing="0" summary="과제제출리스트">
+						<caption>과제제출리스트</caption>
+						<colgroup>
+							<col width="120">
+							<col width="">
+						</colgroup>
+						<thead>
+							<tr>
+								<th scope="colgroup">수강생</th>
+								<th scope="col">첨부파일</th>
+							</tr>
+						</thead>						
+						<tbody id="reportListBox"></tbody>						
+					</table>
+				</div> 
+			</div>
+		</div>	
+</body>
+</html>
+

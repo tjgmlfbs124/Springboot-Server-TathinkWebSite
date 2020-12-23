@@ -1,0 +1,407 @@
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="classroomTab04" class="tabCont" id="service4" style="display:none;">
+<script th:inline="javascript">
+	var listQnaBox = null;
+	
+	$(document).ready(function(){ 
+		$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+		
+		listQnaBox = document.getElementById("qnaListBox");
+			
+		searchQnA("TITLE","", 0);		
+	});
+	
+	var gSearchQnAWord = "";
+	var gSearchQnAOption = "ALL";
+	var gSearchQnAPageIdx= 0;
+	
+	function showQnaListBox()
+	{
+		listQnaBox.style.display="block";
+	}
+	
+	function hideQnaListBox()
+	{
+		listQnaBox.style.display="none";
+	}
+	
+	function isHideQnaListBox()
+	{
+		if(listQnaBox.style.display == "none")
+			return true;
+		
+		return false;
+	}
+	
+	function searchQnAPage(page)
+	{
+		searchQnA(gSearchQnAOption, gSearchQnAWord, page);
+	}
+	
+	function searchQnA(option, word, page)
+	{	
+		var reqObj = new Object();
+		
+		gSearchQnAWord = word;
+		gSearchQnAOption = option;
+		gSearchQnAPageIdx = page;
+		
+		reqObj.classSeq = /*[[${class.seq}]]*/;
+	    reqObj.word = word;
+	    reqObj.option = option;  
+	    reqObj.pageIdx = page;
+	    
+	    hideQnaView();
+	    hideQnaQWrite();
+	    hideQnaAWrite();
+	    
+	    var request = $.ajax({url: /*[[@{/api/listClassQna}]]*/, type : "post", data : reqObj, dataType: "text"});
+	    
+	    request.done(makeListQnA);    
+	    request.fail(function(jqXHR, textStatus){alert(textStatus);});
+	}
+	
+	function makeListQnA(data)
+	{
+		var responseData = JSON.parse(data);
+	    
+	  	if(!responseData)
+	  	{
+	     	alert("세션이 만료되어 재접속이 필요합니다.");
+	     	return false;
+	  	}      
+	  	
+	  	if(responseData.error != null)
+	  	{
+	     	alert(responseData.error);
+	     	return false;
+	  	}      
+	  	
+	  	clearQna();
+	  	
+	  	hideQnaView();
+	  	hideQnaQWrite();
+	  	hideQnaAWrite();
+	  	
+	  	if(isHideQnaListBox())
+		{
+	  		showQnaListBox();
+		}
+	  	
+	  	var totalQnaCnt = document.getElementById("totalQnaCnt");
+	  	totalQnaCnt.innerHTML = "Total : <span class='red'></span>"+responseData.qnaList.length+"건";
+	  	
+	  	if(responseData.qnaList.length>0)
+	  		document.getElementById("qnaEmpty").style.display="none";
+	  	
+	  	for(i = 0; i < responseData.qnaList.length; i ++)
+		{
+	  		addQna(responseData.qnaList[i]);
+		}
+	  	
+	    if(responseData.pageCnt != 0)
+	    {
+	      addqnaPaginate(responseData);
+	    }
+	    	
+	}
+	
+	function clearQna()
+	{
+	    var qnaListContainer = document.getElementById("qnaListContainer");
+	    var qnaPaginate = document.getElementById("qnaPaginate");	    
+	    document.getElementById("qnaEmpty").style.display="";
+	    
+	    qnaListContainer.innerHTML = "";
+	    qnaPaginate.innerHTML = "";
+	}
+	
+	function addQna(qnaData)
+	{	
+		var qnaListContainer;
+		var row;
+		var checkCell;
+		var seqCell;
+		var titleCell;
+		var writerCell;
+		var regDateCell;
+		var ansStateCell;
+	
+		var ahref = document.createElement("a");
+		qnaListContainer = document.getElementById("qnaListContainer");
+	  	row = qnaListContainer.insertRow();
+	  	
+	  	if(bManager == true)
+	  	{
+			checkCell = row.insertCell(0);
+			seqCell   = row.insertCell(1);
+			titleCell   = row.insertCell(2);
+			writerCell   = row.insertCell(3);
+			regDateCell   = row.insertCell(4);
+			ansStateCell = row.insertCell(5);
+			
+			var checkbox = document.createElement("input");
+			checkbox.setAttribute("type", "checkbox");
+			checkbox.setAttribute("id", "qnaCheck");
+			checkbox.setAttribute("name", "qnaCheck");
+			checkbox.value = qnaData.seq;
+			
+			checkCell.appendChild(checkbox);
+	  	}
+	  	else
+		{
+			seqCell   = row.insertCell(0);
+			titleCell   = row.insertCell(1);
+			writerCell   = row.insertCell(2);
+			regDateCell   = row.insertCell(3);	
+			ansStateCell = row.insertCell(4);
+		}
+	
+	  	seqCell.innerHTML = qnaData.seq;
+	  	
+	  	ahref.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 400px;white-space: nowrap; font-weight:bold;cursor:pointer");
+	  	ahref.innerHTML = qnaData.qTitle;
+	  	titleCell.setAttribute("class", "listTitle");
+	  	titleCell.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 400px;white-space: nowrap;");
+	  	titleCell.appendChild(ahref);
+	  	titleCell.innerHTML = titleCell.innerHTML.replace(/\n\r?/g, '<br />');
+	  	
+	  	if(qnaData.bSec){
+			var fileImage = document.createElement("img");
+	  		fileImage.src = /*[[@{/images/ui/common/board_lock.png}]]*/;
+	  		fileImage.width = 20;
+	  		fileImage.height = 20;
+	  		titleCell.appendChild(fileImage);	
+	  	}  	
+	  	
+	  	writerCell.setAttribute("class", "alcenter");
+	  	writerCell.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 100px;white-space: nowrap;");
+	  	
+	  	if(qnaData.qWriter != null)
+	  	{
+	  		writerCell.textContent = qnaData.qWriter;
+	  		writerCell.innerHTML = writerCell.innerHTML.replace(/\n\r?/g, '<br />');
+	  	}
+	  	
+	  	regDateCell.setAttribute("class", "alcenter");
+	  	var date = new Date(qnaData.qRegDate);
+	  	regDateCell.textContent = date.toISOString().slice(0,10);;
+	  	
+	  	ansStateCell.setAttribute("class", "alcenter");
+	  	ansStateCell.textContent = qnaData.state;
+	  	ansStateCell.innerHTML = ansStateCell.innerHTML.replace(/\n\r?/g, '<br />');
+	  	
+	  	titleCell.onclick=function()
+		{
+ 	  		hideQnaAWrite();
+			hideQnaQWrite();
+			showQnaView(qnaData.seq);
+		};
+	}
+	
+	function addqnaPaginate(pageData)
+	{	
+		var qnaPaginate = document.getElementById("qnaPaginate");
+		var first  = document.createElement("a");
+		
+		first.setAttribute("class", "first");
+	  	first.setAttribute("href", "javascript:{}");
+	  	first.setAttribute("onclick", "searchQnAPage('0');");
+	  	first.innerHTML="맨처음으로";
+	  	qnaPaginate.appendChild(first);
+	  	    
+	  	if(!(pageData.currPageIdx < 6))
+	  	{
+	    	var pre = document.createElement("a");
+	    	pre.setAttribute("class", "pre");
+	    	pre.setAttribute("href", "javascript:{}");
+	    	pre.setAttribute("onclick", "searchQnAPage('"+(pageData.startPageIdx-2)+"');");
+	    	pre.innerHTML="이전페이지";
+	    	qnaPaginate.appendChild(pre);
+	  	}   
+	  
+	  	var pageBox  = document.createElement("div");
+	  	qnaPaginate.appendChild(pageBox);
+	  
+	  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+	  	{
+	    	if(i!=pageData.currPageIdx)
+	    	{
+	      		var p  = document.createElement("a");
+	      		p.setAttribute("href", "javascript:{}");
+	      		p.setAttribute("onclick", "searchQnAPage('"+(i-1)+"');");
+	      		p.innerHTML=""+i;
+	      
+	      		pageBox.appendChild(p);
+	    	}
+	    	else
+	    	{
+	      		var s  = document.createElement("strong");
+	      		s.setAttribute("href", "javascript:{}");
+	      		s.setAttribute("onclick", "searchQnAPage('"+(i-1)+"');");
+	      		s.innerHTML=""+i;
+	      		pageBox.appendChild(s);
+	    	}
+	  	}    
+	   	
+	  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+	  	{
+	    	var next = document.createElement("a");
+	    	next.setAttribute("class", "next");
+	    	next.setAttribute("href", "javascript:{}");
+	    	next.setAttribute("onclick", "searchQnAPage('"+pageData.endPageIdx+"');");
+	    	next.innerHTML="다음페이지";
+	    	qnaPaginate.appendChild(next);
+	  	}  
+	  
+	  	var last   = document.createElement("a");
+	  	last.setAttribute("class", "last");
+	  	last.setAttribute("href", "javascript:{}");
+	  	last.setAttribute("onclick", "searchQnAPage('"+(pageData.pageCnt-1)+"');");
+	  	last.innerHTML="맨마지막";
+	  	qnaPaginate.appendChild(last);
+	}
+	
+	function onClicksearchQnA()
+	{
+		var searchQnAValue = document.getElementById("searchQnAValue");
+		var searchQnAType = document.getElementById("searchQnAType");
+		
+		searchQnA(searchQnAType.value, searchQnAValue.value,0);
+	}
+	
+	
+	function onClickQnaAllCheck()
+	{
+	    if( $("#qnaAllCheck").is(':checked') )
+	    {
+	        $("input[name=qnaCheck]").prop("checked", true);
+	    }
+	    else
+	    {
+	       $("input[name=qnaCheck]").prop("checked", false);
+	    }
+	}
+	
+	function onClickListDelete()
+	{	
+		var checkRow = "";
+		
+		$( "input[name='qnaCheck']:checked" ).each (
+			function ()
+			{
+				checkRow = checkRow + $(this).val()+":" ;
+			}
+		);
+		
+		checkRow = checkRow.substring(0,checkRow.lastIndexOf( ":"));
+		
+		if(checkRow == '')
+		{
+		  alert("삭제할 공지사항을 선택하세요.");
+		  return false;
+		}
+		
+		if(confirm("선택한 공지사항을 삭제 하시겠습니까?"))
+		{
+			deleteListQna(checkRow);
+		}	
+	}
+	
+	function deleteListQna(checkRow)
+	{
+		var reqObj = new Object();
+		
+	    reqObj.listSeq = checkRow;
+	    reqObj.word = gSearchQnAWord;
+	    reqObj.option = gSearchQnAOption;
+	    reqObj.pageIdx = gSearchQnAPageIdx;
+	    reqObj.classSeq = /*[[${class.seq}]]*/;
+	    
+	    var request = $.ajax({ url : /*[[@{/api/deleteListQna}]]*/, type : "post", data : reqObj, dataType: "text"});
+	    
+	    request.done(makeListQnA);
+	    
+	    request.fail(function(jqXHR, textStatus){ alert(textStatus); });
+	}
+	
+	function onClickQWrite()
+	{
+		if(writeBox.style.display=="block")
+			return;
+		
+		hideQnaView();
+		hideQnaAWrite();
+		hideQnaListBox();
+		showQnaQWrite(-1,"", "", true);
+	}
+</script>	
+	<div id="qnaListBox">
+			<div class="tableTop">
+				<p id="totalQnaCnt" class="count"></p>
+				<div class="searchTable"> 
+					<span class="formElement">
+						<select id="searchQnAType" style="width:105px;">
+							<option value="ALL">전체</option>
+							<option value="TITLE">제목</option>
+							<option value="QUESTION">질문</option>
+							<option value="ANSWER">답변</option>
+							<option value="WRITER">작성자</option>
+							<option value="ANSSTATE">답변상태</option>
+						</select>
+					</span>
+					<div class="search">
+						<input type="text" id="searchQnAValue">
+						<button type="submit" id="searchQnAAction" name="searchQnAAction" onclick="onClicksearchQnA();">검색하기</button>
+					</div>
+				</div>
+			</div>
+			<div class="tbList">
+				<table border="1" cellspacing="0" summary="질문과 답변 리스트">
+					<caption>질문과 답변 리스트</caption>
+					<colgroup>
+						<col th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}" width="40">
+						<col width="40">
+						<col width="">
+						<col width="110">
+						<col width="110">
+						<col width="90">
+					</colgroup>
+					<thead>
+						<tr>
+							<th th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}" scope="colgroup"><input type="checkbox" id="qnaAllCheck" name="qnaAllCheck" onclick="onClickQnaAllCheck()"></th>
+							<th scope="col">No.</th>
+							<th scope="col">제목</th>
+							<th scope="col">작성자</th>
+							<th scope="col">등록일</th>
+							<th scope="col">답변상태</th>
+						</tr>
+					</thead>
+					<tbody id="qnaListContainer"></tbody>
+				</table>
+			</div>
+			<div id = "qnaEmpty" style="text-align:center;">정보가 없습니다.</div>
+			<div class="btnWrap" th:if="${member == null}"> 
+				<span class="btnBasic blue"> <a type="button" id="form02" href="javascript:{}" onclick="alert('로그인이 필요합니다.');">글쓰기</a></span>
+			</div> 
+			<div class="btnWrap" th:if="${member != null && member.level == 'LEVEL_MEMBER'}">
+				<span class="btnBasic blue"> <a type="button" id="form02" href="javascript:{}" onclick="onClickQWrite();">글쓰기</a></span>
+			</div>
+			<div class="btnWrap" th:if="${member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN')}"> 
+				<span class="btnBasic light"><button type="button" id="form01" onclick="onClickListDelete();">삭제</button></span>
+			</div> 
+			<div id="qnaPaginate" class="paginate"></div>
+		</div>
+		<div th:replace="myroom/classQnaView :: contents"></div>
+		<div th:replace="myroom/classQnaQWrite :: contents"></div>
+		<div th:replace="myroom/classQnaAWrite :: contents"></div>
+	</div>			
+</body>
+</html>

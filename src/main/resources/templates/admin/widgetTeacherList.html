@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+	<div th:fragment="contents" class="modal" id="selectTeacherDlg" style="display:none">
+		<div id="listBox" class="modal-content">
+	     	<h3>강사리스트</h3>
+				<div class="tableTop">
+					<p id="totalTeacherCnt" class="count"></p>
+					<div class="searchTable"> 
+						<span class="formElement">
+							<select id="searchTeacherType" style="width:150px;">
+								<option value="NAME">성명</option>
+								<option value="ID">아이디</option>
+								<option value="NUMBER">휴대전화번호</option>
+							</select>
+						</span>
+						<div class="search">
+							<input type="text" id="searchTeacherValue">
+							<button type="submit" id="searchAction" name="searchAction" onclick="onClickTeacherSearch();">검색하기</button>
+						</div>
+					</div>
+				</div> 
+				<div class="tbList">
+					<table border="1" cellspacing="0" summary="강사 리스트">
+						<caption>회원정보 리스트</caption>
+						<colgroup>
+							<col width="100">
+							<col width="100">
+							<col width="100">
+						</colgroup>
+						<thead>
+							<tr>
+								<th scope="col">성명</th>
+								<th scope="col">아이디</th>
+								<th scope="col">휴대전화</th>
+							</tr>
+						</thead>
+						<tbody id="teacherInfoListContainer"></tbody>
+					</table>
+				</div>
+				<div id = "teacherEmpty" style="text-align:center;">정보가 없습니다.</div>  	
+				<div id="teacherpaginate" class="paginate"></div>
+			</div>
+	</div>
+</body>
+</html>

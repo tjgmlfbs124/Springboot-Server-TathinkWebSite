@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+	<head>
+	<meta charset="utf-8"/>
+	<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+	<meta http-equiv="Content-Style-Type" content="text/css"/>
+	</head>
+	
+	<body>
+		<div th:fragment="classTab02" class="tabCont" id="service2" style="display:none;">
+			<div class="leftCon">
+				<div class="join_photo"><img th:src="@{${teacher.imgPath}}" alt="강사사진"/></div>
+			</div>
+			<div class="rightCon">
+				<h1>성명</h1>
+				<div class="lectureinfo"><th:block th:text="${teacher.realname}" /></div>
+				<h1>교수소개</h1>
+				<div class="lectureinfo">
+					<ul>
+						<th:block th:utext="${#strings.replace(#strings.escapeXml(teacher.teacherInfo),'&#10;','&lt;br&gt;')}"/>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/smartEditor/js/HuskyEZCreator.js}" charset="utf-8"></script>
+<script type="text/javascript" th:src="@{/smartEditor/js/myeditor.js}" th:inline="javascript"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+var bManager = false;
+
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	
+	search("ALL","ALL","", 0);
+});
+
+var gSearchWord = "";
+var gSearchOptionState = "ALL";
+var gSearchOptionType = "ALL";
+var gSearchPageIdx= 0;
+
+function searchPage(page)
+{
+	search(gSearchOptionState, gSearchOptionType, gSearchWord, page);
+}
+
+function search(state, type, word, page)
+{	
+	var reqObj = new Object();
+	
+	gSearchWord = word;
+	gSearchOptionState = state;
+	gSearchOptionType = type;
+	gSearchPageIdx = page;
+	
+    reqObj.word = word;
+    reqObj.state = state;
+    reqObj.type = type;
+    reqObj.pageIdx = page;
+        
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/listClassInfo}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(makeList);
+    
+    request.fail(function(jqXHR, textStatus){ 
+        alert(textStatus);
+    });
+}
+
+function makeList(data)
+{
+	var responseData = JSON.parse(data);
+    
+  	if(!responseData)
+  	{
+     	alert("세션이 만료되어 재접속이 필요합니다.");
+     	return false;
+  	}      
+  	
+  	if(responseData.error != null)
+  	{
+     	alert(responseData.error);
+     	return false;
+  	}
+  	
+  	clearCalssInfo();
+  		
+  	var totalCnt = document.getElementById("totalCnt");
+  	totalCnt.innerHTML = "Total : <span class='red'></span>"+responseData.offlineClassList.length+"건";
+  	
+  	if(responseData.offlineClassList.length>0)
+  		document.getElementById("empty").style.display="none";
+  	
+  	for(i = 0; i < responseData.offlineClassList.length; i ++)
+	{
+  		addClassInfo(responseData.offlineClassList[i]);
+	}
+  	
+    if(responseData.pageCnt != 0)
+    {
+      addPaginate(responseData);
+    }
+}
+
+function clearCalssInfo()
+{
+    var classInfoListContainer = document.getElementById("classInfoListContainer");
+    var paginate = document.getElementById("paginate");	
+    document.getElementById("empty").style.display="";
+    
+    classInfoListContainer.innerHTML = "";
+    paginate.innerHTML = "";
+}
+
+function addClassInfo(classInfoData)
+{	
+	var classInfoListContainer;
+	var row;
+	var checkCell;
+	var classCodeCell;
+	var classNameCell;
+	var teacherNameCell;
+	var regDateCell;
+	var stateCell;
+	var btnCell;
+
+	var checkbox = document.createElement("input");
+	var ahref = document.createElement("a");
+	
+	classInfoListContainer = document.getElementById("classInfoListContainer");
+  	row = classInfoListContainer.insertRow();
+  	
+	checkCell = row.insertCell(0);
+	classCodeCell = row.insertCell(1);
+	classNameCell = row.insertCell(2);
+	teacherNameCell = row.insertCell(3);
+	regDateCell = row.insertCell(4);
+	stateCell = row.insertCell(5);
+	btnCell = row.insertCell(6);
+	
+	checkbox.setAttribute("type", "checkbox");
+	checkbox.setAttribute("id", "classCheck");
+	checkbox.setAttribute("name", "classCheck");
+	checkbox.value = classInfoData.seq;
+	
+	checkCell.appendChild(checkbox);
+  
+	classCodeCell.textContent = classInfoData.code;
+	
+	ahref.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 300px;white-space: nowrap; font-weight:bold;cursor:pointer");
+	ahref.innerHTML = classInfoData.name;
+	classNameCell.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 220px;white-space: nowrap;");
+	classNameCell.appendChild(ahref);	
+	classNameCell.innerHTML = classNameCell.innerHTML.replace(/\n\r?/g, '<br />');
+	
+	teacherNameCell.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 500px;white-space: nowrap;");
+	teacherNameCell.textContent = classInfoData.teacherRealname+"("+classInfoData.teacherUsername+")";
+	teacherNameCell.innerHTML = teacherNameCell.innerHTML.replace(/\n\r?/g, '<br />');
+  	
+  	
+  	regDateCell.setAttribute("class", "alcenter");
+  	var date = new Date(classInfoData.regDate);
+  	regDateCell.innerHTML = date.toISOString().slice(0,10);
+  	
+  	stateCell.setAttribute("class", "alcenter");
+  	stateCell.textContent = checkClassState(classInfoData);
+  	
+  	classNameCell.onclick=function()
+	{
+  		location.href = "classManage?classSeq="+ checkbox.value;
+	};
+	
+	var span = document.createElement("span");
+	span.setAttribute("class","btnBasic blue");
+	
+	var btn = document.createElement("button");
+	btn.setAttribute("type","button");
+	btn.setAttribute("id","btn04");
+	btn.setAttribute("onclick","gotoClassRoom("+classInfoData.seq+","+classInfoData.courseSeq +")");
+	btn.textContent = "강의실입장";
+	
+	span.appendChild(btn);
+	btnCell.appendChild(span);
+  	btnCell.setAttribute("style", "text-align:center;");
+}
+
+function gotoClassRoom(classSeq, courseSeq){
+	var offlineClass =/*[[${class}]]*/;
+	location.href = "../myroom/classroom?classSeq="+ classSeq + "&courseSeq=" + courseSeq;
+}
+
+function addPaginate(pageData)
+{	
+	var paginate = document.getElementById("paginate");
+	var first  = document.createElement("a");
+	
+	first.setAttribute("class", "first");
+  	first.setAttribute("href", "javascript:{}");
+  	first.setAttribute("onclick", "searchPage('0');");
+  	first.innerHTML="맨처음으로";
+  	paginate.appendChild(first);
+  	    
+  	if(!(pageData.currPageIdx < 6))
+  	{
+    	var pre = document.createElement("a");
+    	pre.setAttribute("class", "pre");
+    	pre.setAttribute("href", "javascript:{}");
+    	pre.setAttribute("onclick", "searchPage('"+(pageData.startPageIdx-2)+"');");
+    	pre.innerHTML="이전페이지";
+    	paginate.appendChild(pre);
+  	}   
+  
+  	var pageBox  = document.createElement("div");
+  	paginate.appendChild(pageBox);
+  
+  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+  	{
+    	if(i!=pageData.currPageIdx)
+    	{
+      		var p  = document.createElement("a");
+      		p.setAttribute("href", "javascript:{}");
+      		p.setAttribute("onclick", "searchPage('"+(i-1)+"');");
+      		p.innerHTML=""+i;
+      
+      		pageBox.appendChild(p);
+    	}
+    	else
+    	{
+      		var s  = document.createElement("strong");
+      		s.setAttribute("href", "javascript:{}");
+      		s.setAttribute("onclick", "searchPage('"+(i-1)+"');");
+      		s.innerHTML=""+i;
+      		pageBox.appendChild(s);
+    	}
+  	}    
+   	
+  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+  	{
+    	var next = document.createElement("a");
+    	next.setAttribute("class", "next");
+    	next.setAttribute("href", "javascript:{}");
+    	next.setAttribute("onclick", "searchPage('"+pageData.endPageIdx+"');");
+    	next.innerHTML="다음페이지";
+    	paginate.appendChild(next);
+  	}  
+  
+  	var last   = document.createElement("a");
+  	last.setAttribute("class", "last");
+  	last.setAttribute("href", "javascript:{}");
+  	last.setAttribute("onclick", "searchPage('"+(pageData.pageCnt-1)+"');");
+  	last.innerHTML="맨마지막";
+  	paginate.appendChild(last);
+}
+
+function onClickSearch()
+{
+	var searchValue = document.getElementById("searchValue");
+	var searchStateType = document.getElementById("searchStateType");
+	var searchType = document.getElementById("searchType");
+	
+	search(searchStateType.value, searchType.value, searchValue.value, 0);
+}
+
+
+function onClickAllCheck()
+{
+    if( $("#classAllCheck").is(':checked') )
+    {
+        $("input[name=classCheck]").prop("checked", true);
+    }
+    else
+    {
+       $("input[name=classCheck]").prop("checked", false);
+    }
+}
+
+function onClickListDelete()
+{	
+	var checkRow = "";
+	
+	$( "input[name='classCheck']:checked" ).each (
+		function ()
+		{
+			checkRow = checkRow + $(this).val()+":" ;
+		}
+	);
+	
+	checkRow = checkRow.substring(0,checkRow.lastIndexOf( ":"));
+	
+	if(checkRow == '')
+	{
+	  alert("삭제할 과목을 선택하세요.");
+	  return false;
+	}
+	
+	if(confirm("선택한 과목을 삭제 하시겠습니까?"))
+	{
+		alert("Todo:삭제시 강좌가 개설되어있으면 삭제 안된다고 할것!!!");
+		DeleteClassList(checkRow);
+	}	
+}
+
+function DeleteClassList(checkRow)
+{
+	var reqObj = new Object();
+    reqObj.listClass = checkRow;
+    reqObj.word = gSearchWord;
+    reqObj.state = gSearchOptionState;
+    reqObj.type = gSearchOptionType;
+    reqObj.pageIdx = gSearchPageIdx;
+    
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/deleteClassList}]]*/, 
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(makeList);
+    
+    request.fail(function(jqXHR, textStatus){alert(textStatus);});
+}
+</script>
+</head>
+
+<body>
+	<div id="wrap"> 
+		<div th:replace="header :: contents"></div>
+		<div id="container"> 
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>관리자 메뉴</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think!</span>
+					<div class="place"><span><a th:href="@{/}">Home</a></span> > 관리자 메뉴 > 강좌관리</div>
+				</div>
+			</div>
+			<div id="contents_container"> 
+				<div class="lnb">
+					<div th:replace="admin/adminLnb :: contents"></div>
+				</div>
+      			<div class="subcontents">
+	      			<div id="listBox">
+	      				<h3>강좌리스트</h3>
+						<div class="tableTop">
+							<p id="totalCnt" class="count"></p>
+							<div class="searchTable"> 
+								<span class="formElement">
+									<select id="searchStateType" style="width:105px;">
+										<option value="ALL">모든상태</option>
+										<option value="WAIT">대기</option>
+										<option value="APPLY">신청중</option>
+										<option value="START">강의중</option>
+										<option value="END">종강</option>
+									</select>									
+								</span>
+								<span class="formElement">
+									<select id="searchType" style="width:105px;">
+										<option value="ALL">전체</option>
+										<option value="COURSE_CODE">과목코드</option>
+										<option value="COURSE_NAME">과목명</option>
+										<option value="CLASS_CODE">강좌코드</option>
+										<option value="CLASS_NAME">강좌명</option>
+										<option value="TEACHER">담당교수</option>
+									</select>									
+								</span>								
+								<div class="search">
+									<input type="text" id="searchValue">
+									<button type="submit" id="searchAction" name="searchAction" onclick="onClickSearch();">검색하기</button>
+								</div>
+							</div>							
+						</div> 						
+						<div class="btnWrap" > 
+							<span class="btnBasic light"><button type="button" id="form01" onclick="onClickListDelete();">삭제</button></span>
+							<span class="btnBasic blue"><button type="button" id="form01" onclick="location.href='classManage'">등록</button></span>
+						</div>						 
+						<div class="tbList">
+							<table border="1" cellspacing="0" summary="강좌리스트">
+								<caption>과목리스트</caption>
+								<colgroup>
+									<col width="40px">
+									<col width="90px">
+									<col width="*">
+									<col width="90px">
+									<col width="100px">
+									<col width="80px">
+									<col width="160px">
+								</colgroup>
+								<thead>
+									<tr>
+										<th scope="colgroup"><input type="checkbox" id="classAllCheck" name="classAllCheck" onclick="onClickAllCheck()"></th>
+										<th scope="col">강좌코드</th>
+										<th scope="col">강좌명</th>
+										<th scope="col">담당교수</th>
+										<th scope="col">등록일</th>
+										<th scope="col">상태</th>
+										<th scope="col">강의실</th>
+									</tr>
+								</thead>
+								<tbody id="classInfoListContainer"></tbody>
+							</table>
+						</div>
+						<div id = "empty" style="text-align:center;">정보가 없습니다.</div> 
+						<div id="paginate" class="paginate"></div>
+					</div>
+      			</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

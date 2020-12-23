@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta name="viewport" content="width=1080" />
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}" />
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}" />
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+
+<!--[if lt IE 9]>
+		<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+		<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+	<![endif]-->
+</head>
+<body>
+	<div id="wrap">
+		<div th:replace="header :: contents"></div>
+		<div id="container">
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>T. A. Think</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think</span>
+					<div class="place">
+						<span><a th:href="@{/}">Home</a></span> > 아이디·비밀번호 찾기
+					</div>
+				</div>
+			</div>
+			<div id="contents_container">
+				<div id="lnb" class="lnb">
+					<div th:replace="join/joinLnb :: contents"></div>
+				</div>
+				<div class="subcontents" style="display:">
+					<div class="loginCenter">
+						<div class="intro">
+							<div class="inner">
+								<strong>T.A. Think에 오신 것을 환영합니다.</strong>
+								<p>회원가입 후 로그인하시면 다양한 강의를 신청·이용하실 수 있습니다.</p>
+							</div>
+						</div>
+						<div class="findForm">
+							<!--아이디 찾기 -->
+							<div class="component">
+								<h1>아이디 찾기</h1>
+								<form name="idForm" id="idForm" th:action="@{/join/findIdResult}" method="post" onsubmit="return checkIdFind();">
+									<div class="box">
+										<table>
+											<caption>이름, 이메일주소를 입력하는 아이디 찾기 서식</caption>
+											<tbody>
+												<tr>
+													<th scope="row">
+														<label for="TA_name">이름</label>
+													</th>
+													<td>
+														<span class="formElement"> 
+															<input type="text" id="TA_name" name="name" placeholder="" style="width: 228px;" maxlength="20">
+														</span>
+													</td>
+												</tr>
+												<tr>
+													<th scope="row">
+														<label for="id_email">이메일주소</label>
+													</th>
+													<td>
+														<span class="formElement"> 
+															<input type="text" id="TA_mail01" name="email01" placeholder="" style="width: 200px;" maxlength="20">	@ <input type="text" id="TA_mail02" name="email02" placeholder="" style="width: 200px;" maxlength="20">
+														</span> 
+														<p class="desc">회원가입 시 작성했던 성명과 이메일을 입력해 주세요.</p>
+														<span class="btnBasic">
+															<button type="submit">찾기</button>
+														</span>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</form>
+							</div>
+							<!-- 비밀번호 찾기 -->
+							<div class="component" style="margin-top: 50px">
+								<h1>비밀번호 찾기</h1>
+								<form name="pwdForm" id="pwdForm" th:action="@{/join/findPwdResult}" method="post" onsubmit="return checkPwdFind();">
+									<div class="box">
+										<table>
+											<caption>이름, 이메일주소를 입력하는 아이디 찾기 서식</caption>
+											<tbody>
+												<tr>
+													<th scope="row">
+														<label for="TA_id">아이디</label>
+													</th>
+													<td>
+														<span class="formElement"> 
+															<input type="text" id="TA_id" name="id" placeholder="" style="width: 228px;" maxlength="20">
+														</span>
+													</td>
+												</tr>
+												<tr>
+													<th scope="row">
+														<label for="TA_name02">이름</label>
+													</th>
+													<td>
+														<span class="formElement"> 
+															<input type="text" id="TA_name02" name="name" placeholder="" style="width: 228px;" maxlength="20">
+														</span>
+													</td>
+												</tr>
+												<tr>
+													<th scope="row">
+														<label for="TA_email03">이메일주소</label>
+													</th>
+													<td>
+														<span class="formElement"> 
+															<input type="text" id="TA_email03" name="email01" placeholder="" style="width: 180px;" maxlength="20"> @ <input type="text" id="TA_email04" name="email02" placeholder="" style="width: 180px;" maxlength="20">
+														</span> 
+														<span class="btnBasic">
+															<a href="javascript:{}" onclick="regAuthNum();" id="authNumReq">인증번호 발급</a>
+														</span>
+														<p class="desc">회원가입 시 작성했던 성명과 이메일을 입력해 주세요.</p>
+													</td>
+												</tr>
+												<tr>
+													<th scope="row">
+														<label for="TA_num">인증번호</label>
+													</th>
+													<td>
+														<span class="formElement"> 
+															<input type="text" id="inputAuthNum" name="authNum" placeholder="" style="width: 228px;" maxlength="20">
+															<p class="desc">인증받은 번호를 입력해 주세요.</p> 
+														</span>
+														<span class="btnBasic">
+															<button onclick="">찾기</button>
+														</span>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+<script th:inline="javascript">	
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready( function() {	
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+});
+
+function EmailCheck(email){
+	var regex = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/;   		   		
+		if(!regex.test(email))
+			return false;
+		
+		return true;
+}
+
+function checkIdFind()
+{
+	if($('#TA_name').val() == ""){
+		alert("이름을 입력하세요.");
+		return false;
+	}
+
+	if($('#TA_mail01').val() == "" || $('#TA_mail02').val() == ""){
+		alert("이메일을 입력하세요.");
+   		return false
+	}	   		
+   	
+	var email = $('#TA_mail01').val() + "@" + $('#TA_mail02').val();		   		
+   	
+	if(!EmailCheck(email))
+	{
+   		alert("올바른 이메일 주소를 입력하세요.");
+   		return false;
+   	}		
+   	
+	return true;
+}
+
+function checkPwdFind()
+{
+	if($('#TA_id').val() == ""){
+		alert("아이디 입력하세요.");
+		return false;
+	}
+	
+	if($('#TA_name02').val() == ""){
+		alert("이름을 입력하세요.");
+		return false;
+	}
+	
+	if($('#TA_email03').val() == "" || $('#TA_email04').val() == ""){
+		alert("이메일을 입력하세요.");
+		return false;
+	}
+	
+	if($('#inputAuthNum').val() == ""){
+		alert("인증번호를 입력하세요.");
+		return false;
+	}
+	
+	var strEmail = $('#TA_email03').val() + "@" + $('#TA_email04').val();
+	
+	if(!EmailCheck(strEmail)){
+		alert("올바른 이메일 주소를 입력하세요.");
+			return false;
+	}
+	
+	return true;
+}
+
+function regAuthNum()
+{
+	if($('#TA_id').val() == ""){
+		alert("아이디 입력하세요.");
+		return false;
+	}
+	
+	if($('#TA_name02').val() == ""){
+		alert("이름을 입력하세요.");
+		return false;
+	}
+	
+	if($('#TA_email03').val() == "" || $('#TA_email04').val() == ""){
+		alert("이메일을 입력하세요.");
+		return false;
+	}
+	
+	var strEmail = $('#TA_email03').val() + "@" + $('#TA_email04').val();
+	
+	if(!EmailCheck(strEmail)){
+		alert("올바른 이메일 주소를 입력하세요." + strEmail);
+			return false;
+	}
+	
+	$.ajax({
+		url:/*[[@{/api/reqEmailAuthForFindPwd}]]*/,
+		type:"post",
+		dataType:"text",
+		data: {
+			id: $('#TA_id').val(), name: $('#TA_name02').val(), email: strEmail
+		},
+		success:function(data){						
+			if(data == ""){
+				alert("인증번호를 발송하였습니다.\n수신한 7개의 숫자를 입력하세요.");
+								
+			}
+			else{
+				alert(data);		
+			}
+		}
+	});
+	
+	return false;
+	
+}
+</script>
+</html>

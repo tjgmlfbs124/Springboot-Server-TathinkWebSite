@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+		<div th:fragment="contents" class="modal" id="selectKitDlg" style="display:none">
+			<div id="listBox" class="modal-content">
+				<h3>교보재리스트</h3>
+				<div class="tableTop">
+					<p id="totalKitCnt" class="count"></p>
+					<div class="searchTable"> 
+						<span class="formElement">
+							<select id="searchKitType" style="width:105px;">
+								<option value="NAME">교보재명</option>
+								<option value="CODE">교보재코드</option>
+							</select>
+						</span>
+						<div class="search">
+							<input type="text" id="searchKitValue">
+							<button type="submit" id="searchAction" name="searchAction" onclick="onClickKitSearch();">검색하기</button>
+						</div>
+					</div>							
+				</div> 											 
+				<div class="tbList">
+					<table border="1" cellspacing="0" summary="교보재리스트">
+						<caption>교보재리스트</caption>
+						<colgroup>
+							<col width="140">
+							<col width="">
+						</colgroup>
+						<thead>
+							<tr>
+								<th scope="col">교보재코드</th>
+								<th scope="col">교보재명</th>
+							</tr>
+						</thead>
+						<tbody id="kitInfoListContainer"></tbody>
+					</table>
+				</div> 
+				<div id = "kitEmpty" style="text-align:center;">정보가 없습니다.</div>	
+				<div id="kitpaginate" class="paginate"></div>
+			</div>
+		</div>	
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+});
+
+</script>
+</head>
+
+<body>
+	<div id="wrap"> 
+		<div th:replace="header :: contents"></div>
+		<div id="container"> 
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>교수진 소개</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think!</span>
+					<div class="place"><span><a th:href="@{/}">Home</a></span> > 교수진 소개 > T. A. Think 선생님</div>
+				</div>
+			</div>
+			<div id="contents_container"> 
+				<div class="lnb">
+					<div th:replace="tathinkInfo/tathinkInfoLnb :: contents"></div>
+				</div>
+				<div class="subcontents">
+					<h3>교육센터 오시는 길</h3>
+					<h4>대구 / 칠곡 교육센터 (본사)</h4>
+					<div class="TAload">
+						<p>대구광역시 북구 칠곡중앙대로 180 DIP스마트 상용화센터 203호</p>
+						<div> <!-- * Daum 지도 --> 
+							<!-- 1. 지도 노드 -->
+							<div id="daumRoughmapContainer1472808056112" class="root_daum_roughmap root_daum_roughmap_landing"></div>
+							<!-- 2. 설치 스크립트
+								* 지도 퍼가기 서비스를 2개 이상 넣을 경우, 설치 스크립트는 하나만 삽입합니다.
+							--> 
+							<script charset="UTF-8" class="daum_roughmap_loader_script" src="http://dmaps.daum.net/map_js_init/roughmapLoader.js"></script> 
+
+							<!-- 3. 실행 스크립트 --> 
+<script charset="UTF-8">
+new daum.roughmap.Lander({
+	"timestamp" : "1472808056112",
+	"key" : "cudm",
+	"mapWidth" : "825",
+	"mapHeight" : "500"
+}).render();
+</script> 
+</div><!-- // Daum 지도 --> 
+<p><b>버스 :</b>527, 708, 719, 724 , 726, 730, 750, 북구1, 칠곡4, 급행3</p>
+<p><b>지하철 :</b>3호선 매천역(491m)</p></div>
+<h4>대구 수성구 교육센터</h4>
+<div class="TAload"><p>2017년 오픈예정</p></div>
+<h4>대구 상인동 교육센터</h4>
+<div class="TAload"><p>2018년 오픈예정</p></div>
+<h4>대구 침산동 교육센터</h4>
+<div class="TAload cs"><p>2018년 오픈예정</p></div>
+</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

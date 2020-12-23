@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+	<div th:fragment="myclassTab06" class="tabCont" id="service6" style="display:none;">
+<script  th:inline="javascript">
+var gSearchWord06 = "";
+var gSearchOptionType06 = "ALL";
+var gSearchPageIdx06= 0;
+
+function search06Page(page)
+{
+	search06(gSearchOptionType06, gSearchWord06, page);
+}
+
+function search06(type, word, page)
+{	
+	var reqObj = new Object();
+	
+	gSearchWord06 = word;
+	gSearchOptionType06 = type;
+	gSearchPageIdx06 = page;
+	
+    reqObj.word = word;
+    reqObj.type = "CLASS_END";
+    reqObj.pageIdx = page;
+        
+    var request = $.ajax(
+        {
+          url     : /*[[@{/api/listMyClass}]]*/,
+          type    : "post",
+          data    : reqObj,
+          dataType: "text"          
+        });
+    
+    request.done(makeList06);
+    
+    request.fail(function(jqXHR, textStatus){ 
+        alert(textStatus);
+    });
+}
+
+function makeList06(data)
+{
+	var responseData = JSON.parse(data);
+    
+  	if(!responseData)
+  	{
+     	alert("세션이 만료되어 재접속이 필요합니다.");
+     	return false;
+  	}      
+  	
+  	if(responseData.error != null)
+  	{
+     	alert(responseData.error);
+     	return false;
+  	}
+  	
+  	clear06();
+	
+  	var totalCnt = document.getElementById("totalCnt06");
+  	totalCnt.innerHTML = "Total : <span class='red'></span>"+responseData.offlineClassList.length+"건";
+  	
+  	if(responseData.offlineClassList.length>0)
+  		document.getElementById("myclassTab06Empty").style.display="none";
+  	
+  	for(i = 0; i < responseData.offlineClassList.length; i ++)
+	{
+  		add06(responseData.offlineClassList[i]);
+	}
+  	
+    if(responseData.pageCnt != 0)
+    {
+    	addPaginate06(responseData);
+    }
+}
+
+function clear06()
+{
+    var myclassTab06Container = document.getElementById("myclassTab06Container");
+    var paginate06 = document.getElementById("paginate06");	
+        
+    myclassTab06Container.innerHTML = "";
+    paginate06.innerHTML = "";
+    document.getElementById("myclassTab06Empty").style.display="";
+}
+
+function add06(classInfoData)
+{	
+	var myclassTab06Container;
+	var row;
+	var onOffCell;
+	var classNameCell;
+	var remainDayCell;
+	var progressCell;
+	var classRoomCell;
+	
+	myclassTab06Container = document.getElementById("myclassTab06Container");
+  	row = myclassTab06Container.insertRow();
+  	
+  	onOffCell = row.insertCell(0);
+  	classNameCell = row.insertCell(1);
+  	classRoomCell = row.insertCell(2);
+	
+  	onOffCell.setAttribute("class", "alcenter");
+	onOffCell.textContent = '오프라인';
+	
+  	classNameCell.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 400px;white-space: nowrap;");
+  	classNameCell.textContent = classInfoData.name;
+  	classNameCell.innerHTML = classNameCell.innerHTML.replace(/\n\r?/g, '<br />');
+  	
+	var span = document.createElement("span");
+	span.setAttribute("class","btnBasic blue");
+	
+	var btn = document.createElement("button");
+	btn.setAttribute("type","button");
+	btn.setAttribute("id","btn06");
+	btn.setAttribute("onclick","gotoClassRoom("+classInfoData.seq+","+classInfoData.courseSeq +")");
+	btn.textContent = "강의실입장";
+	
+	span.appendChild(btn);  	
+  	classRoomCell.appendChild(span);
+  	classRoomCell.setAttribute("style", "text-align:center;");
+  	
+}
+
+function addPaginate06(pageData)
+{	
+	var paginate06 = document.getElementById("paginate06");
+	var first  = document.createElement("a");
+	
+	first.setAttribute("class", "first");
+  	first.setAttribute("href", "javascript:{}");
+  	first.setAttribute("onclick", "searchPage06('0');");
+  	first.innerHTML="맨처음으로";
+  	paginate06.appendChild(first);
+  	    
+  	if(!(pageData.currPageIdx < 6))
+  	{
+    	var pre = document.createElement("a");
+    	pre.setAttribute("class", "pre");
+    	pre.setAttribute("href", "javascript:{}");
+    	pre.setAttribute("onclick", "searchPage06('"+(pageData.startPageIdx-2)+"');");
+    	pre.innerHTML="이전페이지";
+    	paginate06.appendChild(pre);
+  	}   
+  
+  	var pageBox  = document.createElement("div");
+  	paginate06.appendChild(pageBox);
+  
+  	for(i = pageData.startPageIdx; i <= (pageData.endPageIdx <= pageData.pageCnt?pageData.endPageIdx:pageData.pageCnt); i++)
+  	{
+    	if(i!=pageData.currPageIdx)
+    	{
+      		var p  = document.createElement("a");
+      		p.setAttribute("href", "javascript:{}");
+      		p.setAttribute("onclick", "searchPage06('"+(i-1)+"');");
+      		p.innerHTML=""+i;
+      
+      		pageBox.appendChild(p);
+    	}
+    	else
+    	{
+      		var s  = document.createElement("strong");
+      		s.setAttribute("href", "javascript:{}");
+      		s.setAttribute("onclick", "searchPage06('"+(i-1)+"');");
+      		s.innerHTML=""+i;
+      		pageBox.appendChild(s);
+    	}
+  	}    
+   	
+  	if(Math.floor((pageData.currPageIdx-1) / 5) * 5 + 5 < pageData.pageCnt)
+  	{
+    	var next = document.createElement("a");
+    	next.setAttribute("class", "next");
+    	next.setAttribute("href", "javascript:{}");
+    	next.setAttribute("onclick", "searchPage06('"+pageData.endPageIdx+"');");
+    	next.innerHTML="다음페이지";
+    	paginate06.appendChild(next);
+  	}  
+  
+  	var last   = document.createElement("a");
+  	last.setAttribute("class", "last");
+  	last.setAttribute("href", "javascript:{}");
+  	last.setAttribute("onclick", "searchPage06('"+(pageData.pageCnt-1)+"');");
+  	last.innerHTML="맨마지막";
+  	paginate06.appendChild(last);
+}
+
+function onClickSearch06()
+{
+	var searchValue = document.getElementById("searchValue06");
+	search06("ALL", searchValue.value, 0);
+}
+</script>	
+		<div class="tableTop">
+			<p id="totalCnt06" class="count"></p>
+			<div class="searchTable"> 
+				<div class="search">
+					<input type="text" id="searchValue06" placeholder="검색할 강좌명을 입력하세요." style="width: 228px;" maxlength="20" >
+					<button type="submit" id="searchAction" name="searchAction" onclick="onClickSearch06();">검색하기</button>
+				</div>
+			</div>							
+		</div> 
+		<div class="tbList">
+			<table border="1" cellspacing="0" summary="강의종료된 강좌 리스트">
+				<caption>강의종료된 강좌 리스트</caption>
+				<colgroup>
+					<col width="100px">
+					<col width="*">
+					<col width="200px">
+				</colgroup>
+				<thead>
+					<tr>
+						<th scope="colgroup">구분</th>
+						<th scope="col">강좌명</th>
+						<th scope="col">강의실</th>
+					</tr>
+				</thead>
+				<tbody id="myclassTab06Container"></tbody>
+			</table>
+		</div>
+		<div id = "myclassTab06Empty" style="text-align:center;">정보가 없습니다.</div>
+		<div id="paginate06" class="paginate"></div>
+	</div>
+</body>
+</html>

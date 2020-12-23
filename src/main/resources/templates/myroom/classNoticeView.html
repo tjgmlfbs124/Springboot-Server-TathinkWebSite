@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="noticeBox" style="display:none">
+<script th:inline="javascript">
+	var noticeBox = document.getElementById("noticeBox");
+
+	function hideNoticeView()
+	{
+		noticeBox.style.display="none";
+		location.href = "#contents_container";
+		
+	}
+	
+	function showNoticeView(seq)
+	{
+		var reqObj = new Object();
+		var pwd = null;
+
+	    reqObj.seq = seq;
+	    
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/viewClassNotice}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.done(function (data)
+	    {      	
+	    	var responseData = JSON.parse(data);
+	    	
+	      	if(!responseData)
+	      	{
+	         	alert("세션이 만료되어 재접속이 필요합니다.");
+	         	return false;
+	      	}    
+	      	
+	    	if(responseData.error != null)
+	    	{
+	    		alert(responseData.error);
+	    		return false;
+	    	}
+	    	
+	    	noticeBox.style.display = "block";
+	    	location.href = "#noticeBox";
+	    	
+	    	var noticeBoxTitle = document.getElementById("noticeBoxTitle");
+	    	var noticeBoxAttField = document.getElementById("noticeBoxAttField");
+	    	var noticeBoxRegDate = document.getElementById("noticeBoxRegDate");
+	    	var noticeBoxWriter = document.getElementById("noticeBoxWriter");
+	    	var noticeBoxContent = document.getElementById("noticeBoxContent");
+	    	var noticeBoxbtnDel = document.getElementById("noticeBoxbtnDel");
+	    	var noticeBoxbtnMod = document.getElementById("noticeBoxbtnMod");
+	    	var noticeBoxbtnList = document.getElementById("noticeBoxbtnList");
+	    	
+	    	noticeBoxTitle.textContent = responseData.title;
+	    	noticeBoxTitle.innerHTML = noticeBoxTitle.innerHTML.replace(/\n\r?/g, '<br />');
+	    	noticeBoxRegDate.textContent = convertDateTimeString(responseData.regDate);
+	    	noticeBoxWriter.textContent = responseData.writer;
+	    	noticeBoxWriter.innerHTML = noticeBoxWriter.innerHTML.replace(/\n\r?/g, '<br />');
+	    	noticeBoxContent.innerHTML = responseData.content;
+
+	    	makeAttachedNoticeFileList(noticeBoxAttField, responseData.listAttachedFiles);
+	    	
+      		if(bManager)
+      		{
+      			noticeBoxbtnDel.style.display = "inline";
+      			noticeBoxbtnMod.style.display = "inline";
+      		}
+	      	else
+      		{
+      			noticeBoxbtnDel.style.display = "none";
+      			noticeBoxbtnMod.style.display = "none";
+      		}
+	      	
+	      	noticeBoxbtnList.style.display = "inline";
+	      	
+	      	viewData = responseData;
+	    });
+	    
+	    request.fail(function(jqXHR, textStatus){     	
+	        alert(textStatus);
+	    });
+	}
+	
+	function onClickNoticeList()
+	{
+		hideNoticeView();
+		
+		if(isHideNoticeListBox())
+			searchNotice(gSearchNoticeOption, gSearchNoticeWord, gSearchNoticePageIdx);
+	}
+	
+	function onClickNoticeDelete()
+	{
+		if(confirm("공지사항을 삭제하시겠습니까?")){
+			var reqObj = new Object();
+			
+		    reqObj.seq = viewData.seq;
+		    reqObj.classSeq = /*[[${class.seq}]]*/;
+		    reqObj.word = gSearchNoticeWord;
+		    reqObj.option = gSearchNoticeOption;
+		    reqObj.pageIdx = gSearchNoticePageIdx;
+		    
+		    var request = $.ajax({ url : /*[[@{/api/deleteClassNotice}]]*/, type : "post", data : reqObj, dataType: "text"});
+		    
+		    request.done(function(data){makeNoticeList(data); hideNoticeView();});
+		    
+		    request.fail(function(jqXHR, textStatus){ alert(textStatus); });			
+		}
+	}
+	
+	function onClickNoticeModify()
+	{
+		hideNoticeView();
+		showNoticeWrite(viewData.seq, viewData.title, viewData.listAttachedFiles, viewData.content);
+	}
+	
+	function makeAttachedNoticeFileList(noticeBoxAttField, listAttachedFiles)
+	{
+		noticeBoxAttField.innerHTML = "";
+		
+		for(i = 0; i < listAttachedFiles.length; i ++)
+		{
+			var div = document.createElement("div");
+			var a = document.createElement("a");
+			var span = document.createElement("span");
+			var fileName = listAttachedFiles[i];
+			
+			var arraySplitUrl = fileName.split("/");
+			var nArLength = arraySplitUrl.length;
+			var arFileName = arraySplitUrl[nArLength-1];
+			
+			span.setAttribute("class", "addfile");
+			span.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 300px;white-space: nowrap; font-weight:bold;cursor:pointer");
+			span.textContent = arFileName;
+			
+			downlNoticeFileSetClickListener(a, fileName);
+
+			
+			a.appendChild(span);
+			div.appendChild(a);
+			noticeBoxAttField.appendChild(div);
+		}
+	}
+	
+	function downlNoticeFileSetClickListener(a, fileName)
+	{
+		a.onclick=function()
+		{
+			downloadNoticeFile(fileName);
+		};
+	}
+	
+	function downloadNoticeFile(fileName){
+		document.getElementById('noticeBoxFilePath').value = fileName;
+		document.getElementById('noticeBoxDownloadForm').submit();
+	}
+</script>
+	<form id="noticeBoxDownloadForm" name="downloadForm" th:action="@{/api/downloadClassNotice}" method='POST'>
+		<input type="hidden" id="noticeBoxFilePath" name="filePath" value="">
+	</form>
+	<h4>공지사항 글보기</h4>
+	<div class="table">
+		<table>
+			<caption>공지사항 글보기</caption>
+			<colgroup>
+				<col style="width:200px">
+				<col style="width:">
+			</colgroup>
+			<tbody>
+				<tr>
+					<th scope="row"><label for="title">제목</label></th>
+					<td>
+						<span id="noticeBoxTitle" class="formElement">
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="TA_addfile">첨부파일</label>
+					</th>
+					<td>         
+						<div id="noticeBoxAttField">
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="listinfo">
+						<span class="title">작성자</span>
+						<span id="noticeBoxWriter"></span>
+						<span class="title">작성일시</span>
+						<span id="noticeBoxRegDate"></span>
+					</td>
+				</tr>
+				<tr>
+					<td id="noticeBoxContent" colspan="2" scope="row" style="line-height:1.5;">
+					</td>
+				</tr>                
+			</tbody>
+		</table>
+	</div>
+	<div class="btnWrap"> 
+		<span class="btnBasic light"><button id="noticeBoxbtnList" type="button" onclick="onClickNoticeList();">목록</button></span> 
+		<span class="btnBasic light"><button id="noticeBoxbtnDel" type="button" onclick="onClickNoticeDelete();">삭제</button></span> 
+		<span class="btnBasic blue"><button id="noticeBoxbtnMod" type="button" onclick="onClickNoticeModify();">수정</button></span>             
+	</div>
+</div>
+</body>
+</html>

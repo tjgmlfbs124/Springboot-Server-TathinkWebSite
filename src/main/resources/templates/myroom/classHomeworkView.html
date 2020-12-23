@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+</head>
+
+<body>
+<div th:fragment="contents" class="subcontents" id="homeworkBox" style="display:none">
+<script th:inline="javascript">
+
+	var fileReportDelete ="";
+	var fileReportNum = 0;
+	
+	var homeworkBox = document.getElementById("homeworkBox");
+
+	function hideHomeworkView()
+	{
+		homeworkBox.style.display="none";				
+	}
+	
+	function showHomeworkView(seq)
+	{
+		var reqObj = new Object();
+		var pwd = null;
+
+	    reqObj.homeworkSeq = seq;
+	    
+	    var request = $.ajax(
+	        {
+	          url     : /*[[@{/api/viewClassHomework}]]*/, 
+	          type    : "post",
+	          data    : reqObj,
+	          dataType: "text"          
+	        });
+	    
+	    request.done(function (data)
+	    {      	
+	    	var responseData = JSON.parse(data);
+	    	
+	      	if(!responseData)
+	      	{
+	         	alert("세션이 만료되어 재접속이 필요합니다.");
+	         	return false;
+	      	}    
+	      	
+	    	if(responseData.error != null)
+	    	{
+	    		alert(responseData.error);
+	    		return false;
+	    	}
+	    	
+	    	homeworkBox.style.display = "block";
+	    	location.href = "#homeworkBox";
+	    	
+	    	var homeworkBoxTitle = document.getElementById("homeworkBoxTitle");
+	    	var homeworkApply = document.getElementById("homeworkApply");
+	    	var homeworkProcess = document.getElementById("homeworkProcess");
+
+	    	var homeworkBoxAttField = document.getElementById("homeworkBoxAttField");
+	    	var homeworkBoxRegDate = document.getElementById("homeworkBoxRegDate");
+	    	var homeworkBoxWriter = document.getElementById("homeworkBoxWriter");
+	    	var homeworkBoxContent = document.getElementById("homeworkBoxContent");
+	    	var homeworkBoxbtnDel = document.getElementById("homeworkBoxbtnDel");
+	    	var homeworkBoxbtnManage = document.getElementById("homeworkBoxbtnManage");
+	    	var homeworkBoxbtnMod = document.getElementById("homeworkBoxbtnMod");
+	    	var homeworkBoxbtnList = document.getElementById("homeworkBoxbtnList");
+	    	
+	    	var reportBoxAttField = document.getElementById("writeReportBoxAttachedFileBox");
+	    	
+	    	var AttachReportFileIte = document.getElementById("AttachReportFileIte");
+	    	var repotBoxbtnSubmit = document.getElementById("repotBoxbtnSubmit");
+	    	var descText = document.getElementById("descText");	    	
+	    	
+	    	homeworkBoxTitle.textContent = responseData.title;
+	    	homeworkApply.textContent = responseData.applyDate;
+	    	homeworkProcess.textContent = responseData.processDate;
+	    	homeworkBoxTitle.innerHTML = homeworkBoxTitle.innerHTML.replace(/\n\r?/g, '<br />');
+	    	homeworkBoxRegDate.textContent = convertDateTimeString(responseData.regDate);
+	    	homeworkBoxWriter.textContent = responseData.writer;
+	    	homeworkBoxWriter.innerHTML = homeworkBoxWriter.innerHTML.replace(/\n\r?/g, '<br />');
+	    	homeworkBoxContent.innerHTML = responseData.content;
+
+	    	makeAttachedHomeworkFileList(homeworkBoxAttField, responseData.listAttachedFiles);
+	    		    	
+      		if(bManager)
+      		{
+      			homeworkBoxbtnDel.style.display = "inline";
+      			homeworkBoxbtnMod.style.display = "inline";
+      			homeworkBoxbtnManage.style.display = "inline";
+      		}
+	      	else
+      		{
+      			homeworkBoxbtnDel.style.display = "none";
+      			homeworkBoxbtnMod.style.display = "none";
+      			homeworkBoxbtnManage.style.display = "none";
+      			
+      			if(responseData.classReport != null){
+      				var classReportSeq = document.getElementById("classReportSeq");
+          			classReportSeq.value = responseData.classReport.seq;
+          			makeAttachedReportFileList(reportBoxAttField, responseData.listReportAttachedFiles);
+      			}
+      			
+      			if(complete==true){
+      				AttachReportFileIte.style.display = "none";
+      				repotBoxbtnSubmit.style.display = "none";
+      				descText.style.display = "none";
+      			}
+      		}
+	      	
+	      	homeworkBoxbtnList.style.display = "inline";
+	      	
+	      	viewData = responseData;
+	    });
+	    
+	    request.fail(function(jqXHR, textStatus){     	
+	        alert(textStatus);
+	    });
+	}
+	
+	function onClickHomeworkList()
+	{
+		hideHomeworkView();
+		hideHWmanageListBox();
+		
+		if(isHideHomeworkListBox())
+			searchHomework(gSearchHomeworkOption, gSearchHomeworkWord, gSearchHomeworkPageIdx);
+	}
+	
+	function onClickHomeworkDelete()
+	{
+		if(confirm("과제를 삭제하시겠습니까?")){
+			var reqObj = new Object();
+			
+		    reqObj.seq = viewData.seq;
+		    reqObj.classSeq = /*[[${class.seq}]]*/;
+		    reqObj.word = gSearchHomeworkWord;
+		    reqObj.option = gSearchHomeworkOption;
+		    reqObj.pageIdx = gSearchHomeworkPageIdx;
+		    
+		    var request = $.ajax({ url : /*[[@{/api/deleteClassHomework}]]*/, type : "post", data : reqObj, dataType: "text"});
+		    
+		    request.done(function(data){makeHomeworkList(data); hideHomeworkView();});
+		    
+		    request.fail(function(jqXHR, textStatus){ alert(textStatus); });			
+		}
+	}
+	
+	function onClickHomeworkModify()
+	{
+		hideHomeworkView();
+		showHomeworkWrite(viewData.seq, viewData.title, viewData.listAttachedFiles, viewData.content, viewData.applyDate, viewData.processDate);
+	}
+	
+	function onClickHomeworkManage()
+	{
+		hideHomeworkView();
+		showHomeworkManage(viewData.seq);
+	}
+	
+	function makeAttachedHomeworkFileList(homeworkBoxAttField, listAttachedFiles)
+	{
+		homeworkBoxAttField.innerHTML = "";
+		
+		for(i = 0; i < listAttachedFiles.length; i ++)
+		{
+			var div = document.createElement("div");
+			var a = document.createElement("a");
+			var span = document.createElement("span");
+			var fileName = listAttachedFiles[i];
+			
+			var arraySplitUrl = fileName.split("/");
+			var nArLength = arraySplitUrl.length;
+			var arFileName = arraySplitUrl[nArLength-1];
+			
+			span.setAttribute("class", "addfile");
+			span.setAttribute("style", "overflow: hidden;text-overflow:ellipsis;max-width: 300px;white-space: nowrap; font-weight:bold;cursor:pointer");
+			span.textContent = arFileName;
+			
+			downlHomeworkFileSetClickListener(a, fileName);
+
+			
+			a.appendChild(span);
+			div.appendChild(a);
+			homeworkBoxAttField.appendChild(div);
+		}
+	}
+	
+	function downlHomeworkFileSetClickListener(a, fileName)
+	{
+		a.onclick=function()
+		{
+			downloadHomeworkFile(fileName);
+		};
+	}
+	
+	function downloadHomeworkFile(fileName){
+		document.getElementById('homeworkBoxFilePath').value = fileName;
+		document.getElementById('homeworkBoxDownloadForm').submit();
+	}
+	
+	function makeAttachedReportFileList(reportBoxAttField, listReportAttachedFiles)
+	{
+		reportBoxAttField.innerHTML = "";
+		
+		for(i = 0; i < listReportAttachedFiles.length; i ++)
+		{
+			var div = document.createElement("div");
+			var a = document.createElement("a");
+			var span = document.createElement("span");
+			
+			if(complete==false){
+				var img = document.createElement("img");
+				img.src=/*[[@{/images/ui/common/btn_del.png}]]*/;			
+				removeAttachedReportFileSetClickListener(a,listReportAttachedFiles[i]);
+			}
+			
+			var fileName = listReportAttachedFiles[i];			
+			var arraySplitUrl = fileName.split("/");
+			var nArLength = arraySplitUrl.length;
+			var arFileName = arraySplitUrl[nArLength-1];
+			
+			span.setAttribute("class", "addfile");
+			span.textContent = arFileName;
+			
+			if(complete==false){
+				a.appendChild(img);
+				span.appendChild(a);
+			}			
+			div.appendChild(span);
+			reportBoxAttField.appendChild(div);
+		}		
+	}
+	
+	function removeAttachedReportFileSetClickListener(a, fileName)
+	{
+		a.onclick=function()
+		{
+			onClickRemoveReportAttachedFile(a,fileName);
+		};
+	}	
+	
+	function onClickRemoveReportAttachedFile(obj, fileName)
+	{
+		document.getElementById('writeReportBoxAttachedFileBox').removeChild(obj.parentNode.parentNode);
+		if(fileReportNum > 0)
+			fileReportDelete += ";";
+		fileReportDelete += fileName;
+		fileReportNum++;
+		document.getElementById('writeReportBoxDelFiles').value = fileReportDelete;
+	}
+
+	function onClickRemoveReportFileItem(obj)
+	{
+		document.getElementById('writeReportBoxFileItemBox').removeChild(obj.parentNode);
+	}
+
+	function onClickAttachReportFileItem()
+	{
+    	var div = document.createElement('div');
+    	div.innerHTML = document.getElementById('writeReportBoxPreSet').innerHTML;
+    	document.getElementById('writeReportBoxFileItemBox').appendChild(div);
+    	var inputName = div.getElementsByTagName('input');
+    	inputName[0].setAttribute("id", "writeReportBoxFileItem");
+    	inputName[0].setAttribute("name", "attachFiles");
+	}
+	
+	function onClickReportSubmit(){		
+		var arr = [];
+        $.each($("input[name='attachFiles']"), function(){            
+        	if($(this).val()!=null && $(this).val()!=""){
+        		arr.push($(this).val());
+        	}
+        });
+
+		if(arr==null || arr.length <= 0){
+			if(fileReportDelete==""){
+				alert("과제 파일을 첨부하세요.");
+				return;
+			}
+		}
+		
+		var data = false;
+		for(var i=0;i<arr.length;i++){
+			if(arr[i]!=""){
+				data = true;
+				break;
+			}
+		}
+		if(data==false){
+			alert("과제 파일을 첨부하세요.");
+			return;
+		}			
+		
+		if(confirm("과제를 제출하시겠습니까?")){
+			var form = document.getElementById('writeReportBoxForm');				
+			var classSeq = document.getElementById('classHomeworkSeq');
+			var homeworkSeq = document.getElementById('writeHomeworkBoxSeq');
+					
+			classSeq.value = /*[[${class.seq}]]*/;
+			homeworkSeq.value = viewData.seq;
+			form.submit();			
+		}
+	}
+</script>
+	<form id="homeworkBoxDownloadForm" name="downloadForm" th:action="@{/api/downloadClassHomework}" method='POST'>
+		<input type="hidden" id="homeworkBoxFilePath" name="filePath" value="">
+	</form>
+	<h4>과제 상세보기</h4>
+	<div class="table">
+		<table>
+			<caption>과제 상세보기</caption>
+			<colgroup>
+				<col style="width:200px">
+				<col style="width:">
+			</colgroup>
+			<tbody>
+				<tr>
+					<th scope="row"><label for="title">제목</label></th>
+					<td>
+						<span id="homeworkBoxTitle" class="formElement">
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="applyDate">제출기간</label></th>
+					<td>
+						<span id="homeworkApply" class="formElement">
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="processDate">성적처리기간</label></th>
+					<td>
+						<span id="homeworkProcess" class="formElement">
+						</span>
+					</td>
+				</tr>								
+				<tr>
+					<th scope="row">
+						<label for="TA_addfile">첨부파일</label>
+					</th>
+					<td>         
+						<div id="homeworkBoxAttField">
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="listinfo">
+						<span class="title">작성자</span>
+						<span id="homeworkBoxWriter"></span>
+						<span class="title">작성일시</span>
+						<span id="homeworkBoxRegDate"></span>
+					</td>
+				</tr>
+				<tr>
+					<td id="homeworkBoxContent" colspan="2" scope="row" style="line-height:1.5;">
+					</td>
+				</tr>              
+			</tbody>						
+		</table>
+	</div>
+	<div class="btnWrap"> 
+		<span class="btnBasic light"><button id="homeworkBoxbtnList" type="button" onclick="onClickHomeworkList();">목록</button></span> 
+		<span class="btnBasic light"><button id="homeworkBoxbtnDel" type="button" onclick="onClickHomeworkDelete();">삭제</button></span>		 
+		<span class="btnBasic blue"><button id="homeworkBoxbtnMod" type="button" onclick="onClickHomeworkModify();">수정</button></span>
+		<span class="btnBasic"><button id="homeworkBoxbtnManage" type="button" onclick="onClickHomeworkManage();">성적관리</button></span>            
+	</div>
+	<div th:if="${member != null && member.level == 'LEVEL_MEMBER'}" >	
+		<form name="writeReportBoxForm" id="writeReportBoxForm" th:action="@{/myroom/reportWriteSubmit}" onsubmit="return true;" method="post" enctype="multipart/form-data">
+			<input type="hidden" id="classReportSeq" name="seq" value=-1>      
+			<input type="hidden" id="classHomeworkSeq" name="classSeq">        
+			<input type="hidden" id="writeHomeworkBoxSeq" name="homeworkSeq">
+			<input type="hidden" id="writeReportBoxDelFiles" name="delFiles">		
+			<div class="table">
+				<table>
+					<colgroup>
+						<col style="width:200px">
+						<col style="width:">
+					</colgroup>		
+					<tbody>
+						<tr>
+							<th scope="row">
+								<label for="TA_addfile">과제첨부</label>
+							</th>
+							<td>                     
+								<div id="writeReportBoxPreSet" style="display:none">
+									<input type="file" id="file" name="file" style="right:0; width:510px; height:35px; margin:0; padding:0; border:0; overflow:hidden;">
+									<a id="" href="javascript:{}" onclick="onClickRemoveReportFileItem(this);"><img th:src="@{/images/ui/common/btn_del.png}"/></a>
+								</div>
+								<div id="writeReportBoxFileItemBox"></div>
+								<span class="btnBasic blue">
+									<button type="button" id="AttachReportFileIte" onclick="onClickAttachReportFileItem();">추가</button>
+								</span>
+								<div id="writeReportBoxAttachedFileBox"></div>
+								<p class="desc" id="descText">5MB 이하의 파일만 업로드 가능합니다.</p>
+							</td>
+						</tr>              
+					</tbody>		
+				</table>
+			</div>
+			<div class="btnWrap"> 
+				<span class="btnBasic blue"><button id="repotBoxbtnSubmit" type="button" onclick="onClickReportSubmit();">제출</button></span>             
+			</div>
+		</form>
+	</div>
+</div>
+</body>
+</html>

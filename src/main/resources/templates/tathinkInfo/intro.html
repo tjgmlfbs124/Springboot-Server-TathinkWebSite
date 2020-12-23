@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+});
+
+</script>
+</head>
+
+<body>
+	<div id="wrap"> 
+		<div th:replace="header :: contents"></div>
+		<div id="container"> 
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>교수진 소개</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think!</span>
+					<div class="place"><span><a th:href="@{/}">Home</a></span> > T. A. Think? > 미래직업변화와 코딩교육</div>
+				</div>
+			</div>
+			<div id="contents_container"> 
+				<div class="lnb">
+					<div th:replace="tathinkInfo/tathinkInfoLnb :: contents"></div>
+				</div>
+				<div class="subcontents future">
+					<h1 class="intro"><span>소프트웨어 코딩교육은</span><br/>전 세계적인 트랜드</h1>
+					<div class="intro">현재 소프트웨어 코딩교육은 한국 뿐만 아니라 전 세계적인 트랜드가 되고 있습니다. 실제로 IT선진국에서는 교육과정 개편을 통해 코딩교육을 필수과목으로 지정하고 있습니다. 오바마 대통령은 2016년 신년연설에서 Computer Science For All이란 제목으로 4조원 이상의 자금을 투입해서 유치원부터 고등학교까지 코딩교육을 강화시키겠다고 밝혔습니다. 또한 미국 노동국은 2017년 이후 컴퓨터관련 직업은 컴퓨터과학을 전공한 학생수를 초과해서 크게 늘어날 것으로 예상된다며 정부당국에 소프트웨어 교육을 강화할 것을 주문하고 있습니다. 영국정부는 2014년을 Code의 해(The Year of Code)로 지정한 이후 5세부터 프로그래밍과 알고리즘 수업을 정규교과과정으로 새롭게 편성하여 시행하고 있습니다. 그리고 핀란드에서는 2016년부터 코디콜루(코딩학교)를 운영하여 주목을 받고 있기도 한데요. 4~8세 아이들을 대상으로 하는 코디콜루만 해도 200개가 넘는다고 합니다. 그리고 한국도 초등학교는 2019년, 중학교와 고등학교 2018년부터 의무교육을 받게 됩니다.</div>
+					<h2 class="intro">경제구조 변화에 따른 미래직업 변화</h2>
+					<div class="intro">소프트웨어 코딩 교육이 강조되는 이유는 경제구조 변화와 밀접한 관련이 있습니다. 2011년만 하더라도 세계적인 인공지능(AI)학자들인 모인 학회에서 고차원적 인공지능(사람과 비슷한 논리, 창의력을 갖는 수준의 인공지능을 말함)은 "50년 안에는 절대 실현될 수 없는 문제이다"라고 말했습니다. 그런데 불과 2015년 연말학회에서는 5~10년 안에 실현될 수도 있다고 말이 바뀌었습니다. '세계경제포럼(WEF)’이 20일 스위스 다보스에서 개막하는 제26차 연차총회를 앞두고 발표한 ‘미래의 일자리(The Future of Jobs)' 전망 보고서에서는 ’인공지능 기반의 제4차 산업혁명'의 영향으로 향후 5년간 5백만개 일자리가 사라질 것이란 전망이 나왔습니다. 2016년의 이세돌과 Google 알파고의 대결을 통해서도 잘 알려진 바와 같습니다. <br/><br/>더구나 한국과 같은 개발도상국은 그 폭풍이 더 엄청날 것이라 예상됩니다. 현재 많은 전문가들이 10~20년 뒤의 미래에는 안정된 직업이란 없다고 말하고 있습니다. 의사, 교수, 변호사도 100% 안정적이지 않고, 현재 초등학교 1학년이 성인이 되는 시기에는 약 65%가 현재 존재하지 않는 새로운 직업을 가지게 될 것이라고 합니다(2015 UN보고서). 현재 금융부분에는 인공지능(AI) 기술이 이미 도입되었습니다. 펀드매니저들의 실적을 분석한 결과 인간 펀드매니저들이 평균 3%의 손실을 낸데 비해서 AI는 5%의 수익을 거뒀습니다. 이러다 보니 최근 영국 최대은행 RBS는 펀드운영인력 550명을 해고했습니다.<br/><br/>김진 서울대 컴퓨터공학부 교수는 "정형화되고 암기 많이 하고, 기존의 예를 기반으로 하는 직업들은 굉장히 많이 대체될 것이라 예상했습니다. 그럼 <b>"어떤 직업이 유망하게 될까요?"</b><br/> 하지만 이 질문은 잘못되었습니다. 이 질문은 <b>"어떤 능력을 가져야만 생존할 수 있을까요?"</b>로 바뀌어야 합니다. 그럼 이 질문에 대한 답은 <b>"새로운 변화에 적응하고 논리적으로 창조하는 능력을 가지는 것이 가장 중요하게 될 것"</b>입니다. 앤드루 메카피 MIT대학 교수 역시 "제2의 기계시대"라는 책에서 "컴퓨팅 기술을 창의적으로 잘 이용할 줄 아는 사람이 가장 강력한 경쟁력을 가질 것"이라고 말했습니다.  </div>
+				</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>

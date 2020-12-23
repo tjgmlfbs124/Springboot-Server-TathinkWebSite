@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Script-Type" content="text/javascript"/>
+<meta http-equiv="Content-Style-Type" content="text/css"/>
+<meta name="viewport" content="width=1080"/>
+<meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+<meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+<title>T.A.Think 수학으로 상상하는 컴퓨팅 사고</title>
+<link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/sub.css}"/>
+<link rel="stylesheet" type="text/css" th:href="@{/css/main.css}"/>
+<script type="text/javascript" th:src="@{/js/jquery-1.9.1.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/jquery.hoverIntent.minified.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/main_top.js}"></script>
+<script type="text/javascript" th:src="@{/js/resource_m/jquery.scrollbox.js}"></script>
+<script type="text/javascript" th:src="@{/js/ui.js}"></script>
+<script type="text/javascript" th:src="@{/smartEditor/js/HuskyEZCreator.js}" charset="utf-8"></script>
+<script type="text/javascript" th:src="@{/smartEditor/js/myeditor.js}" th:inline="javascript"></script>
+
+<script th:inline="javascript">
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+var bManager = false; 
+
+$(document).ready(function(){ 
+	$(document).ajaxSend(function(e, xhr, options) {xhr.setRequestHeader(header, token);});
+	
+	bManager = /*[[${(member != null && (member.level == 'LEVEL_TEACHER' || member.level == 'LEVEL_ADMIN'))}]]*/;
+	
+	initHomeTab();
+});
+
+function initHomeTab(){
+	
+	var classInfoData = /*[[${class}]]*/;	
+	
+	$('.present').click();
+	
+	//Home Tab
+	document.getElementById("classState").innerHTML = checkClassState(classInfoData, bManager);
+	
+	var remainDay = calcRemainDay(classInfoData);
+	if(remainDay>=0){
+		document.getElementById("classRemain").innerHTML = remainDay + "일";
+	}
+	else{
+		document.getElementById("classRemain").innerHTML = "-";
+	}
+	
+	initClassSelect();
+}
+
+function initClassSelect(){
+	var listClass = /*[[${listClass}]]*/;
+	
+	if(listClass==null || listClass.length<=0)
+		return;
+	
+	for(var count = 0; count < listClass.length; count++){
+		var cutlen = 30;
+		var tempText = listClass[count].name;
+		if (tempText.length > cutlen) {
+			tempText = tempText.substr(0, cutlen-2) + '...';
+			}
+        var option = $("<option value="+listClass[count].seq+">"+tempText+"</option>");
+        $('#selectClass').append(option);
+    }
+}
+
+function gotoClassRoom(){
+	var selectedClass = document.getElementById("selectClass").value;
+	if(selectedClass ==null || selectedClass == -1){
+		alert("강좌를 선택해주세요!");
+		return false;
+	}
+	location.href = "../myroom/classroom?classSeq="+ selectedClass;
+}
+</script>
+</head>
+
+<body>
+	<div id="wrap"> 
+		<div th:replace="header :: contents"></div>
+		<div id="container"> 
+			<div class="subhead">
+				<div class="subtitle">
+					<h2>나의 강의실</h2>
+					<span>수학으로 상상하는 컴퓨팅 사고. T.A.Think</span>
+					<div class="place">
+						<span><a th:href="@{/}">Home</a></span> > 나의 강의실 > 수강현황
+					</div>
+				</div>
+			</div>
+			<div id="contents_container"> 
+				<div class="lnb">
+					<div th:replace="myroom/myroomLnb :: contents"></div>
+				</div>
+      			<div class="subcontents">
+					<div class="coursetitle">
+						<span th:if="${course != null}"  class="courseline01"><th:block th:text="${course.courseName}"/></td></span>
+						<span th:unless="${course != null}"  class="courseline01">강의실</td></span>
+						<span th:if="${class != null}" class="courseline02" style="overflow:hidden;text-overflow:ellipsis;max-width:800px;white-space:nowrap;"><th:block th:text="${class.name}"/></span>
+					</div>
+			        <div class="jumocourse"> <span class="formElement">
+			          <select  id="selectClass" name="selectClass" title="" style="width:400px;">
+			          	<option value="-1">다른강좌선택</option>	          				            
+			          </select>
+			          </span>
+			          <button type="button" id="btnSearch" onclick="gotoClassRoom()">이동</button>
+			        </div>					   			
+			        <div th:if="${member != null && member.level == 'LEVEL_MEMBER'}" class="tab type2">
+			          <ul>
+			            <li class="present"><a href="#service1">HOME</a></li>
+			            <li><a href="#service2">공지사항</a></li>
+			            <li><a href="#service3">강좌자료실</a></li>
+			            <li><a href="#service4">Q&amp;A</a></li>
+			            <li><a href="#service5">과제</a></li>
+			            <li><a href="#service6">수강후기</a></li>
+			          </ul>
+			        </div>
+			        <div th:if="${member != null && member.level == 'LEVEL_TEACHER'}" class="tab type3">
+			          <ul>
+			            <li class="present"><a href="#service1">HOME</a></li>
+			            <li><a href="#service2">공지사항</a></li>
+			            <li><a href="#service3">강좌자료실</a></li>
+			            <li><a href="#service4">Q&amp;A</a></li>
+			            <li><a href="#service5">과제</a></li>
+			            <li><a href="#service6">수강후기</a></li>
+			            <li><a href="#service7">수강생관리</a></li>
+			            <li><a href="#service8">출석부</a></li>
+			          </ul>
+			        </div>
+					<div th:if="${member != null && member.level == 'LEVEL_MEMBER'}" class="tabContWrap"> 
+						<div th:replace="myroom/classroomTab01 :: classroomTab01"></div>
+						<div th:replace="myroom/classroomTab02 :: classroomTab02"></div>
+						<div th:replace="myroom/classroomTab03 :: classroomTab03"></div>
+						<div th:replace="myroom/classroomTab04 :: classroomTab04"></div>						
+						<div th:replace="myroom/classroomTab05 :: classroomTab05"></div>
+						<div th:replace="myroom/classroomTab06 :: classroomTab06"></div>
+					</div>
+					<div th:if="${member != null && member.level == 'LEVEL_TEACHER'}"  class="tabContWrap"> 
+						<div th:replace="myroom/classroomTab01 :: classroomTab01"></div>
+						<div th:replace="myroom/classroomTab02 :: classroomTab02"></div>
+						<div th:replace="myroom/classroomTab03 :: classroomTab03"></div>
+						<div th:replace="myroom/classroomTab04 :: classroomTab04"></div>						
+						<div th:replace="myroom/classroomTab05 :: classroomTab05"></div>
+						<div th:replace="myroom/classroomTab06 :: classroomTab06"></div>
+						<div th:replace="myroom/classroomTab07 :: classroomTab07"></div>
+						<div th:replace="myroom/classroomTab08 :: classroomTab08"></div>
+					</div>	     										
+      			</div>
+			</div>
+		</div>
+		<div th:replace="footer :: contents"></div>
+	</div>
+</body>
+</html>
