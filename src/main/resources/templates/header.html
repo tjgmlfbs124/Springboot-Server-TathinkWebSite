@@ -40,9 +40,9 @@
 	                <li><a th:href="@{/teacher/recruitTeacher}">선생님 모집</a></li>
 	              </ul>
 	            </li>
-	            <li><span><a th:href="@{/course}">코딩교실</a></span>
+	            <li><span><a th:href="@{/coding}">코딩교실</a></span>
 	              <ul style="display:none;">
-	                <li><a th:href="@{/teacher/listTeacher}">바로가기</a></li>
+	                <li><a th:href="@{/coding}">바로가기</a></li>
 	              </ul>
 	            </li>
 	            <li th:if="${member != null && (member.level == 'LEVEL_MEMBER' || member.level == 'LEVEL_TEACHER' )}"><span><a th:href="@{/myroom/myclass}">나의 강의실</a></span>

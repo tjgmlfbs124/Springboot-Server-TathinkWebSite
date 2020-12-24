@@ -40,7 +40,12 @@ $(function () {
 <body>
 <div id="wrap">
 	<div th:replace="header :: contents"></div>
+	<div id="container"> 
+	</div>
 
 </div>
+<script>
+	$("#container").load("http://tathink.cafe24.com:3000/");
+</script>
 </body>
 </html>

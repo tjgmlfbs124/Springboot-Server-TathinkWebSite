@@ -36,6 +36,7 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-web')
 	compile('org.springframework.boot:spring-boot-starter-web-services')
 	compile('org.springframework.boot:spring-boot-starter-websocket')
+	compile('org.springframework.boot:spring-boot-starter-web')
 	runtime('org.postgresql:postgresql')
 	providedRuntime('org.springframework.boot:spring-boot-starter-tomcat')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
